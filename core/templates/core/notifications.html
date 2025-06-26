@@ -1,0 +1,115 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Announcements & Notifications</h2>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="?mark_all_read=1" class="btn btn-primary btn-sm">
+                <i class="fas fa-check-double"></i> Mark All as Read
+            </a>
+        </div>
+    </div>
+    
+    <ul class="nav nav-tabs mb-3" id="notificationsTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="notifications-tab" data-bs-toggle="tab" 
+                    data-bs-target="#notifications" type="button" role="tab" aria-selected="true">
+                Personal Notifications
+                <span class="badge bg-danger rounded-pill notification-badge">
+                    {{ user_notifications|length }}
+                </span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="announcements-tab" data-bs-toggle="tab" 
+                    data-bs-target="#announcements" type="button" role="tab" aria-selected="false">
+                School Announcements
+                <span class="badge bg-secondary rounded-pill">
+                    {{ announcements|length }}
+                </span>
+            </button>
+        </li>
+    </ul>
+    
+    <div class="tab-content" id="notificationsContent">
+        <!-- Personal Notifications Tab -->
+        <div class="tab-pane fade show active" id="notifications" role="tabpanel">
+            <div class="list-group notification-list">
+                {% for notification in user_notifications %}
+                <div class="list-group-item {% if not notification.is_read %}unread-notification{% endif %}">
+                    <div class="d-flex w-100 justify-content-between align-items-center">
+                        <h5 class="mb-1">{{ notification.title }}</h5>
+                        <div>
+                            {% if not notification.is_read %}
+                            <span class="badge bg-primary">New</span>
+                            {% endif %}
+                            <small class="text-muted ms-2">{{ notification.created_at|date:'M d, Y H:i' }}</small>
+                        </div>
+                    </div>
+                    <p class="mb-1">{{ notification.message }}</p>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        {% if notification.link %}
+                        <a href="{{ notification.link }}" class="btn btn-sm btn-outline-primary">View Details</a>
+                        {% endif %}
+                        {% if not notification.is_read %}
+                        <form method="post" action="{% url 'mark_notification_read' notification.id %}" class="mark-read-form" data-notification-id="{{ notification.id }}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-light">Mark as Read</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="list-group-item">You have no personal notifications.</div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- School Announcements Tab -->
+        <div class="tab-pane fade" id="announcements" role="tabpanel">
+            <div class="list-group">
+                {% for ann in announcements %}
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ ann.title }}</h5>
+                        <small class="text-muted">{{ ann.created_at|date:'M d, Y H:i' }}</small>
+                    </div>
+                    <p class="mb-1">{{ ann.message }}</p>
+                </div>
+                {% empty %}
+                <div class="list-group-item">No announcements at this time.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_scripts %}
+<script>
+    // Handle tab state persistence using localStorage
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabElements = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        const tabActiveKey = 'notifications_active_tab';
+        
+        // Set active tab based on localStorage if exists
+        const savedTab = localStorage.getItem(tabActiveKey);
+        if (savedTab) {
+            const tab = document.querySelector(savedTab);
+            if (tab) {
+                const bsTab = new bootstrap.Tab(tab);
+                bsTab.show();
+            }
+        }
+        
+        // Save active tab when changed
+        tabElements.forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function (e) {
+                localStorage.setItem(tabActiveKey, '#' + e.target.id);
+            });
+        });
+    });
+</script>
+{% endblock extra_scripts %}
+{% endblock content %}

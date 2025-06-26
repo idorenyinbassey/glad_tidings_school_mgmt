@@ -1,0 +1,18 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Class Performance Analytics</h2>
+    <h4>Classes Taught</h4>
+    <ul>
+        {% for t in taught_classes %}
+        <li>{{ t.assigned_class }} - {{ t.subject }} ({{ t.day_of_week }} {{ t.period }})</li>
+        {% endfor %}
+    </ul>
+    <h4>Student Performance</h4>
+    <ul>
+        {% for perf in performances %}
+        <li>{{ perf.student }} - {{ perf.subject }}: {{ perf.score }} - {{ perf.remarks }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

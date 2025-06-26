@@ -1,0 +1,28 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Academic Resources</h2>
+    <p class="lead">Welcome to the academic resources portal where you can access all school academic materials.</p>
+    
+    <div class="row mt-4">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">E-Library</h5>
+                    <p class="card-text">Access digital books, journals, and educational resources.</p>
+                    <a href="{% url 'academics:elibrary' %}" class="btn btn-primary">Browse E-Library</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Class Timetables</h5>
+                    <p class="card-text">View school-wide class schedules.</p>
+                    <a href="{% url 'academics:timetable' %}" class="btn btn-success">View Timetables</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

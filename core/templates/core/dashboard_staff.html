@@ -1,0 +1,207 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h1 class="card-title mb-0">Welcome, {{ user.first_name }}!</h1>
+                    <p class="text-muted">{{ user.get_role_display }} Dashboard</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="row mb-4">
+                <div class="col-md-6 mb-4 mb-md-0">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">Pending Assignments to Grade</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group">
+                                <a href="{% url 'staff:assignments' %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Grade 10 - Science Project</h6>
+                                        <small class="text-danger">15 submissions</small>
+                                    </div>
+                                    <p class="mb-1 text-muted">Ecosystem Research Projects</p>
+                                </a>
+                                <a href="{% url 'staff:assignments' %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Grade 9 - Math Problems</h6>
+                                        <small class="text-warning">8 submissions</small>
+                                    </div>
+                                    <p class="mb-1 text-muted">Quadratic Equations Set 3</p>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <a href="{% url 'staff:assignments' %}" class="btn btn-sm btn-outline-primary">Grade assignments</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="card-title mb-0">Class Performance</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group">
+                                <a href="{% url 'staff:performance' %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Grade 10 Science</h6>
+                                        <span class="badge bg-success">85% Avg</span>
+                                    </div>
+                                    <p class="mb-1 text-muted">Last Quiz: Chemistry</p>
+                                </a>
+                                <a href="{% url 'staff:performance' %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Grade 9 Math</h6>
+                                        <span class="badge bg-warning">72% Avg</span>
+                                    </div>
+                                    <p class="mb-1 text-muted">Last Test: Geometry</p>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <a href="{% url 'staff:performance' %}" class="btn btn-sm btn-outline-success">View all class performance</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="card-title mb-0">Today's Teaching Schedule</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>Class</th>
+                                            <th>Subject</th>
+                                            <th>Room</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>8:00 - 9:30</td>
+                                            <td>Grade 10A</td>
+                                            <td>Physics</td>
+                                            <td>Lab 3</td>
+                                        </tr>
+                                        <tr>
+                                            <td>9:40 - 11:10</td>
+                                            <td>Grade 9B</td>
+                                            <td>Chemistry</td>
+                                            <td>Lab 2</td>
+                                        </tr>
+                                        <tr>
+                                            <td>12:00 - 1:30</td>
+                                            <td>Grade 11A</td>
+                                            <td>Advanced Physics</td>
+                                            <td>Lab 4</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <a href="{% url 'staff:timetable' %}" class="btn btn-sm btn-outline-info">View full timetable</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mt-4 mt-lg-0">
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="card-title mb-0">School Announcements</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group">
+                                <a href="{% url 'notifications' %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Staff Meeting</h6>
+                                        <small class="text-muted">Today</small>
+                                    </div>
+                                    <p class="mb-1">Staff meeting scheduled for 3:30 PM in the conference room.</p>
+                                </a>
+                                <a href="{% url 'notifications' %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Exam Schedule</h6>
+                                        <small class="text-muted">2 days ago</small>
+                                    </div>
+                                    <p class="mb-1">Final exam schedule has been published.</p>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <a href="{% url 'notifications' %}" class="btn btn-sm btn-outline-warning">View all announcements</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-12 mb-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="card-title mb-0">Attendance Tasks</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group">
+                                <a href="{% url 'staff:attendance' %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Mark Grade 10A Attendance</h6>
+                                        <small class="text-danger">Pending</small>
+                                    </div>
+                                </a>
+                                <a href="{% url 'staff:attendance' %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Mark Grade 9B Attendance</h6>
+                                        <small class="text-danger">Pending</small>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <a href="{% url 'staff:attendance' %}" class="btn btn-sm btn-outline-danger">Manage attendance</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="card-title mb-0">Quick Links</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'academics:elibrary' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-book me-2"></i>E-Library Resources
+                                </a>
+                                <a href="{% url 'cbt:exams' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-edit me-2"></i>Create Exam
+                                </a>
+                                <a href="{% url 'profile' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-user me-2"></i>My Profile
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

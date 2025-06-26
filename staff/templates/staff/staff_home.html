@@ -1,0 +1,58 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Staff Portal</h2>
+    <p class="lead">Welcome to your staff portal where you can manage all your teaching responsibilities.</p>
+    
+    <div class="row mt-4">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">My Timetable</h5>
+                    <p class="card-text">View your teaching schedule.</p>
+                    <a href="{% url 'staff:timetable' %}" class="btn btn-primary">View Timetable</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Assignments & Grading</h5>
+                    <p class="card-text">Manage student assignments and grades.</p>
+                    <a href="{% url 'staff:assignments' %}" class="btn btn-success">Manage Assignments</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Student Performance</h5>
+                    <p class="card-text">View and analyze student performance data.</p>
+                    <a href="{% url 'staff:performance' %}" class="btn btn-info">View Performance</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Attendance Management</h5>
+                    <p class="card-text">Record and view student attendance.</p>
+                    <a href="{% url 'staff:attendance' %}" class="btn btn-danger">Manage Attendance</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">E-Library Resources</h5>
+                    <p class="card-text">Access and manage teaching resources.</p>
+                    <a href="{% url 'academics:elibrary' %}" class="btn btn-warning">Access E-Library</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+# Core dependencies
+Django==5.2.3
+Pillow==10.1.0  # For image processing
+python-dateutil==2.9.0  # For date manipulation
+pytz==2025.2  # For timezone support
+
+# Database adapters
+psycopg2-binary==2.9.9  # PostgreSQL adapter for production
+dj-database-url==2.1.0  # Database URL configuration
+
+# Authentication and security
+django-allauth==1.1.0  # For social authentication
+django-two-factor-auth==1.15.5  # For 2FA
+oauthlib==3.2.2  # OAuth support
+django-cors-headers==4.3.1  # For handling CORS
+
+# Forms and data validation
+django-crispy-forms==2.1  # Better form rendering
+crispy-bootstrap5==2022.1  # Bootstrap 5 template pack for crispy forms
+django-filter==23.5  # For filtering querysets in views
+
+# API
+djangorestframework==3.15.0  # For REST APIs
+markdown==3.6  # For API documentation
+django-rest-swagger==2.2.0  # Swagger API documentation
+
+# File handling
+django-storages==1.14.2  # For file storage backends like AWS S3
+boto3==1.32.0  # AWS SDK for Python
+
+# Caching and performance
+django-redis==5.4.0  # Redis cache backend
+whitenoise==6.6.0  # Serving static files efficiently
+
+# Background tasks
+celery==5.3.6  # For background task processing
+redis==5.0.1  # Redis client for Celery
+django-celery-beat==2.5.0  # Periodic tasks for Celery
+
+# Deployment and production
+gunicorn==21.2.0  # WSGI HTTP Server
+python-dotenv==1.0.0  # Environment variable management
+sentry-sdk==1.40.5  # Error tracking
+
+# Testing and debugging
+pytest==7.4.3
+pytest-django==4.7.0
+coverage==7.4.1
+factory-boy==3.3.0
+faker==22.5.1
+django-debug-toolbar==4.3.0
+
+# Development tools
+flake8==6.1.0
+black==23.11.0
+isort==5.12.0
