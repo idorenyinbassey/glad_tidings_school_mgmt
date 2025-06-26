@@ -16,17 +16,17 @@ django-cors-headers==4.2.0  # For handling CORS
 
 # Forms and data validation
 django-crispy-forms==2.1  # Better form rendering
-crispy-bootstrap5==2022.1  # Bootstrap 5 template pack for crispy forms
+crispy-bootstrap5==2025.6  # Bootstrap 5 template pack for crispy forms
 django-filter==23.3  # For filtering querysets in views
 
 # API
 djangorestframework==3.14.0  # For REST APIs
-markdown==3.6  # For API documentation
-django-rest-swagger==2.2.0  # Swagger API documentation
+markdown==3.5  # For API documentation
+drf-yasg==1.21.7  # Swagger API documentation (django-rest-swagger is deprecated)
 
 # File handling
 django-storages==1.14.2  # For file storage backends like AWS S3
-boto3==1.32.0  # AWS SDK for Python
+boto3==1.28.57  # AWS SDK for Python
 
 # Caching and performance
 django-redis==5.4.0  # Redis cache backend
@@ -47,7 +47,7 @@ pytest==7.4.3
 pytest-django==4.7.0
 coverage==7.4.1
 factory-boy==3.3.0
-faker==22.5.1
+faker==19.3.0
 django-debug-toolbar==4.3.0
 
 # Development tools
