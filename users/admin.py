@@ -23,11 +23,9 @@ class SendWelcomeEmailForm(forms.Form):
 class CustomUserAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
         ('Role info', {'fields': ('role',)}),
-        ('Email notifications', {'fields': ('send_welcome_email',)}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
         ('Role info', {'fields': ('role', 'email')}),
-        ('Email notifications', {'fields': ('send_welcome_email',)}),
     )
     list_display = UserAdmin.list_display + ('role', 'email')
     list_filter = UserAdmin.list_filter + ('role',)
@@ -35,14 +33,25 @@ class CustomUserAdmin(UserAdmin):
     
     # Add a field to the user creation form to control email sending
     def get_form(self, request, obj=None, **kwargs):
+        # Use exclude parameter if provided or initialize it
+        kwargs.setdefault('fields', [])
+        
+        # Get the form without the non-model field
         form = super().get_form(request, obj, **kwargs)
-        if 'send_welcome_email' not in form.base_fields:
-            form.base_fields['send_welcome_email'] = forms.BooleanField(
+        
+        # If this is a change form, add the non-model field manually
+        if obj is not None:  # Change form (not add form)
+            # Create a clean copy of base_fields to avoid modifying the original
+            if not hasattr(form, 'declared_fields'):
+                form.declared_fields = {}
+                
+            form.declared_fields['send_welcome_email_option'] = forms.BooleanField(
                 label=_("Send welcome email to user"),
                 required=False,
-                initial=True,
+                initial=False,
                 help_text=_("Send a welcome email to the user with login instructions.")
             )
+        
         return form
     
     def save_model(self, request, obj, form, change):
@@ -60,9 +69,17 @@ class CustomUserAdmin(UserAdmin):
         super().save_model(request, obj, form, change)
         
         # Send welcome email if requested for new users
-        if is_new_user and form.cleaned_data.get('send_welcome_email') and obj.email:
+        if is_new_user and obj.email:
+            # Always send welcome email for new users
             try:
                 send_welcome_email(obj, temp_password)
+                messages.success(request, f"Welcome email sent to {obj.email}.")
+            except Exception as e:
+                messages.error(request, f"Failed to send welcome email: {str(e)}")
+        elif not change and form.cleaned_data.get('send_welcome_email_option', False) and obj.email:
+            # Send welcome email for existing users if the option is selected
+            try:
+                send_welcome_email(obj)
                 messages.success(request, f"Welcome email sent to {obj.email}.")
             except Exception as e:
                 messages.error(request, f"Failed to send welcome email: {str(e)}")

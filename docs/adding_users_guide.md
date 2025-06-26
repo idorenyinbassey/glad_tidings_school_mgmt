@@ -32,8 +32,8 @@ On the user edit page:
    - Select "Admin" for school administrators
    - Select "IT Support" for technical support personnel
 3. For admin users, also check the "Staff status" checkbox to grant admin site access
-4. Ensure "Send welcome email to user" is checked if you want the user to receive login instructions
-5. Click "Save" to confirm the changes
+4. Click "Save" to confirm the changes
+   - **Note**: For new users, a welcome email is automatically sent to the email address provided
 
 ### Step 4: Create Associated Profile
 
@@ -108,9 +108,13 @@ For adding multiple users at once:
 ### Setting Initial Password
 When creating a user, you can:
 1. Set a temporary password during creation
-2. Check "Send welcome email to user" to automatically email the user their login credentials
+   - When a new user is created, a welcome email with login credentials is automatically sent
    - The welcome email includes their username and temporary password
    - The user will be instructed to change their password on first login
+
+When editing an existing user, you can:
+1. Choose the "Send welcome email to user" option in the user edit form
+   - This will send a welcome email with instructions to the user (without changing their password)
 
 ### Password Reset
 Users can reset their passwords by:

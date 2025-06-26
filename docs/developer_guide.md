@@ -197,6 +197,21 @@ The application uses a custom user model with role-based authentication:
 2. Roles determine which dashboard and features a user has access to
 3. Role-based permissions are enforced in views with decorators and permission checks
 
+### User Email Notifications
+
+The system provides automated email notifications for users:
+
+1. **Welcome Emails**: Automatically sent to new users during creation
+   - For new users, a random password is generated and included in the email
+   - For existing users, welcome emails can be sent from the user edit page using the "Send welcome email to user" option
+   - Implementation is in `users/admin.py` through the `CustomUserAdmin` class
+
+2. **Password Reset Emails**: Sent when users request a password reset or when admins trigger it
+   - Available as a bulk action in the admin interface
+   - Implementation is in `users/email_utils.py`
+
+3. **Email Templates**: Located in `users/templates/users/emails/`
+
 ### Login Flow
 
 1. Users access the login page at `/accounts/login/`
