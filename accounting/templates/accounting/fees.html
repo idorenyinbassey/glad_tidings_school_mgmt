@@ -1,5 +1,6 @@
 {% extends 'core/base.html' %}
 {% load static %}
+{% load accounting_filters %}
 
 {% block title %}Fee Management - Glad Tidings School Portal{% endblock %}
 
@@ -9,7 +10,7 @@
         <div class="col-12 mb-4">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'accounting_home' %}">Accounting</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'accounting:accounting_home' %}">Accounting</a></li>
                     <li class="breadcrumb-item active" aria-current="page">Fee Management</li>
                 </ol>
             </nav>
@@ -133,18 +134,46 @@
                 <div class="card-body">
                     <div class="mb-4">
                         <h6>Fees Collected</h6>
-                        <div class="progress mb-2" style="height: 20px;">
-                            <div class="progress-bar bg-success" role="progressbar" style="width: 65%;" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100">65%</div>
-                        </div>
-                        <small class="text-muted">₦18.2M of ₦28M</small>
+                        {% if total_due > 0 %}
+                            {% with collection_percent=total_paid|div:total_due|mul:100|floatformat:0 %}
+                                <div class="progress mb-2" style="height: 20px;">
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                         style="width: {{ collection_percent }}%;" 
+                                         aria-valuenow="{{ collection_percent }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">{{ collection_percent }}%</div>
+                                </div>
+                                <small class="text-muted">{{ total_paid|currency }} of {{ total_due|currency }}</small>
+                            {% endwith %}
+                        {% else %}
+                            <div class="progress mb-2" style="height: 20px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                            </div>
+                            <small class="text-muted">₦0.00 of ₦0.00</small>
+                        {% endif %}
                     </div>
 
                     <div>
                         <h6>Outstanding Payments</h6>
-                        <div class="progress mb-2" style="height: 20px;">
-                            <div class="progress-bar bg-danger" role="progressbar" style="width: 35%;" aria-valuenow="35" aria-valuemin="0" aria-valuemax="100">35%</div>
-                        </div>
-                        <small class="text-muted">₦9.8M outstanding</small>
+                        {% if total_due > 0 %}
+                            {% with outstanding=total_due|sub:total_paid %}
+                                {% with outstanding_percent=outstanding|div:total_due|mul:100|floatformat:0 %}
+                                    <div class="progress mb-2" style="height: 20px;">
+                                        <div class="progress-bar bg-danger" role="progressbar" 
+                                            style="width: {{ outstanding_percent }}%;" 
+                                            aria-valuenow="{{ outstanding_percent }}" 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="100">{{ outstanding_percent }}%</div>
+                                    </div>
+                                    <small class="text-muted">{{ outstanding|currency }} outstanding</small>
+                                {% endwith %}
+                            {% endwith %}
+                        {% else %}
+                            <div class="progress mb-2" style="height: 20px;">
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                            </div>
+                            <small class="text-muted">₦0.00 outstanding</small>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -165,54 +194,36 @@
                                     <th>Date</th>
                                     <th>Student ID</th>
                                     <th>Student Name</th>
-                                    <th>Class</th>
-                                    <th>Payment Type</th>
+                                    <th>Session/Term</th>
+                                    <th>Payment Method</th>
                                     <th>Amount (₦)</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>2025-06-24</td>
-                                    <td>STU-2025-001</td>
-                                    <td>Michael Johnson</td>
-                                    <td>JSS 2</td>
-                                    <td>Tuition Fee</td>
-                                    <td>250,000</td>
-                                    <td><span class="badge bg-success">Completed</span></td>
-                                    <td><a href="#" class="btn btn-sm btn-outline-primary">View</a></td>
-                                </tr>
-                                <tr>
-                                    <td>2025-06-23</td>
-                                    <td>STU-2025-042</td>
-                                    <td>Sarah Williams</td>
-                                    <td>Primary 4</td>
-                                    <td>Tuition Fee</td>
-                                    <td>220,000</td>
-                                    <td><span class="badge bg-success">Completed</span></td>
-                                    <td><a href="#" class="btn btn-sm btn-outline-primary">View</a></td>
-                                </tr>
-                                <tr>
-                                    <td>2025-06-23</td>
-                                    <td>STU-2025-016</td>
-                                    <td>David Chen</td>
-                                    <td>SS 1</td>
-                                    <td>Tuition Fee (Partial)</td>
-                                    <td>140,000</td>
-                                    <td><span class="badge bg-warning">Partial</span></td>
-                                    <td><a href="#" class="btn btn-sm btn-outline-primary">View</a></td>
-                                </tr>
-                                <tr>
-                                    <td>2025-06-22</td>
-                                    <td>STU-2025-078</td>
-                                    <td>Amina Ibrahim</td>
-                                    <td>Nursery</td>
-                                    <td>Books & Uniform</td>
-                                    <td>65,000</td>
-                                    <td><span class="badge bg-success">Completed</span></td>
-                                    <td><a href="#" class="btn btn-sm btn-outline-primary">View</a></td>
-                                </tr>
+                                {% if payments %}
+                                    {% for payment in payments %}
+                                        <tr>
+                                            <td>{{ payment.payment_date }}</td>
+                                            <td>{{ payment.tuition_fee.student.admission_number }}</td>
+                                            <td>{{ payment.tuition_fee.student.user.get_full_name }}</td>
+                                            <td>{{ payment.tuition_fee.session }}/{{ payment.tuition_fee.term }}</td>
+                                            <td>{{ payment.get_method_display }}</td>
+                                            <td>{{ payment.amount|floatformat:2 }}</td>
+                                            <td>
+                                                <span class="badge {% if payment.tuition_fee.status == 'paid' %}bg-success{% elif payment.tuition_fee.status == 'partial' %}bg-warning{% else %}bg-danger{% endif %}">
+                                                    {{ payment.tuition_fee.get_status_display }}
+                                                </span>
+                                            </td>
+                                            <td><a href="#" class="btn btn-sm btn-outline-primary">View</a></td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="8" class="text-center">No payment records found</td>
+                                    </tr>
+                                {% endif %}
                             </tbody>
                         </table>
                     </div>

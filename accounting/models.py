@@ -5,6 +5,12 @@ from django.utils import timezone
 # Create your models here.
 
 class TuitionFee(models.Model):
+    STATUS_CHOICES = [
+        ('unpaid', 'Unpaid'),
+        ('partial', 'Partial'),
+        ('paid', 'Paid')
+    ]
+    
     student = models.ForeignKey('students.StudentProfile', on_delete=models.CASCADE, related_name='tuition_fees')
     session = models.CharField(max_length=20)
     term = models.CharField(max_length=20)
@@ -12,7 +18,7 @@ class TuitionFee(models.Model):
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     due_date = models.DateField()
     paid_date = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=20, default='unpaid', choices=[('unpaid', 'Unpaid'), ('partial', 'Partial'), ('paid', 'Paid')])
+    status = models.CharField(max_length=20, default='unpaid', choices=STATUS_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='tuitionfee_created')
@@ -31,11 +37,45 @@ class TuitionFee(models.Model):
         else:
             self.status = 'unpaid'
             self.paid_date = None
-        self.save(update_fields=['status', 'paid_date'])
-
+        return self.status
+        
     def save(self, *args, **kwargs):
-        self.update_status()
+        if 'update_fields' not in kwargs or 'status' not in kwargs.get('update_fields', []):
+            self.status = self.update_status()
         super().save(*args, **kwargs)
+        
+    @property
+    def amount_outstanding(self):
+        """Calculate the outstanding amount"""
+        return max(0, self.amount_due - self.amount_paid)
+    
+    @property
+    def payment_percentage(self):
+        """Calculate the payment percentage"""
+        if self.amount_due > 0:
+            return (self.amount_paid / self.amount_due) * 100
+        return 0
+    
+    @classmethod
+    def get_fee_statistics(cls):
+        """Get overall fee statistics"""
+        from django.db.models import Sum, Count
+        
+        total_due = cls.objects.aggregate(total=Sum('amount_due'))['total'] or 0
+        total_paid = cls.objects.aggregate(total=Sum('amount_paid'))['total'] or 0
+        unpaid_count = cls.objects.filter(status='unpaid').count()
+        partial_count = cls.objects.filter(status='partial').count()
+        paid_count = cls.objects.filter(status='paid').count()
+        
+        return {
+            'total_due': total_due,
+            'total_paid': total_paid,
+            'outstanding': max(0, total_due - total_paid),
+            'unpaid_count': unpaid_count,
+            'partial_count': partial_count,
+            'paid_count': paid_count,
+            'collection_percentage': (total_paid / total_due * 100) if total_due > 0 else 0
+        }
 
 class Payment(models.Model):
     PAYMENT_METHODS = [
@@ -48,22 +88,44 @@ class Payment(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_date = models.DateField()
     method = models.CharField(max_length=50, choices=PAYMENT_METHODS)
+    receipt_number = models.CharField(max_length=50, blank=True)
     reference = models.CharField(max_length=100, blank=True)
+    notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='payment_created')
+    
+    class Meta:
+        ordering = ['-payment_date', '-created_at']
 
     def __str__(self):
         return f"{self.tuition_fee} - {self.amount} on {self.payment_date}"
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
+            # Check if this is a new payment
+            is_new = self.pk is None
+            
             # Prevent overpayment
-            total_paid = self.tuition_fee.amount_paid + self.amount
-            if total_paid > self.tuition_fee.amount_due:
-                raise ValueError('Payment exceeds amount due!')
+            if is_new:  # Only check and update amount_paid for new payments
+                total_paid = self.tuition_fee.amount_paid + self.amount
+                if total_paid > self.tuition_fee.amount_due:
+                    raise ValueError('Payment exceeds amount due!')
+            
             super().save(*args, **kwargs)
-            self.tuition_fee.amount_paid += self.amount
-            self.tuition_fee.save()
+            
+            # Only update tuition fee for new payments
+            if is_new:
+                # Update the tuition fee
+                tuition = self.tuition_fee
+                tuition.amount_paid += self.amount
+                # Update status manually before saving to avoid recursion
+                if tuition.amount_paid >= tuition.amount_due:
+                    tuition.status = 'paid'
+                    tuition.paid_date = timezone.now().date()
+                elif tuition.amount_paid > 0:
+                    tuition.status = 'partial'
+                # Save with specific fields to avoid triggering unnecessary updates
+                tuition.save(update_fields=['amount_paid', 'status', 'paid_date'])
 
 class Payroll(models.Model):
     staff = models.ForeignKey('staff.StaffProfile', on_delete=models.CASCADE, related_name='payrolls')
