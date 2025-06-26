@@ -1,5 +1,7 @@
 # Glad Tidings School Management Portal
 
+[![Django CI/CD Pipeline](https://github.com/idorenyinbassey/glad_school_mgm/actions/workflows/django-ci.yml/badge.svg)](https://github.com/idorenyinbassey/glad_school_mgm/actions/workflows/django-ci.yml)
+
 A comprehensive school management system built with Django, featuring role-based dashboards for students, staff, administrators, and IT support personnel.
 
 ## Features
@@ -94,6 +96,18 @@ Or for specific test categories:
 ```
 
 Where category is one of: url, security, responsive, features, performance, forms, mobile, api
+
+## Continuous Integration/Continuous Deployment
+
+This project uses GitHub Actions for CI/CD:
+
+- Automated testing on every push and pull request
+- Code linting and style checks
+- Test coverage reporting
+- Automated builds
+- Deployment pipeline (when configured)
+
+The workflow configuration can be found in `.github/workflows/django-ci.yml`.
 
 ## License
 
