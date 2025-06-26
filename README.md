@@ -44,8 +44,8 @@ A comprehensive school management system built with Django, featuring role-based
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/glad_tidings_school_mgmt.git
-   cd glad_tidings_school_mgmt
+   git clone https://github.com/idorenyinbassey/glad_school.git
+   cd glad_school
    ```
 
 2. Create and activate a virtual environment:
