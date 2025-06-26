@@ -28,6 +28,11 @@ drf-yasg==1.21.7  # Swagger API documentation (django-rest-swagger is deprecated
 django-storages==1.14.2  # For file storage backends like AWS S3
 boto3==1.28.57  # AWS SDK for Python
 
+# Testing
+pytest==8.0.0  # Test runner
+pytest-django==4.8.0  # Django integration for pytest
+pytest-cov==4.1.0  # Coverage plugin for pytest
+
 # Caching and performance
 django-redis==5.4.0  # Redis cache backend
 whitenoise==6.6.0  # Serving static files efficiently

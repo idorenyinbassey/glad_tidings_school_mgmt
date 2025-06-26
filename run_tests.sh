@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Glad Tidings School Management Portal Test Runner
+# Now supports both Django test runner and pytest
+
 # Function to run tests with error handling
 run_test_suite() {
     local test_name=$1
@@ -8,7 +11,13 @@ run_test_suite() {
     
     echo "Running $test_name for Glad Tidings School Management Portal"
     echo "=============================================================="
-    python manage.py test $test_path --verbosity=$verbosity
+    
+    # Use pytest if available, otherwise fall back to Django's test runner
+    if command -v pytest >/dev/null 2>&1; then
+        python -m pytest $test_path -v
+    else
+        python manage.py test $test_path --verbosity=$verbosity
+    fi
     
     # Check if the tests passed
     if [ $? -eq 0 ]; then

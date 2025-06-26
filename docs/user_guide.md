@@ -327,13 +327,35 @@ python manage.py loaddata backup.json
 To run the test suite:
 
 ```bash
-./run_tests.sh all-fixed
+# Using pytest (recommended)
+python -m pytest
+
+# Using Django's test runner
+python manage.py test
 ```
 
-Or for specific test categories:
+For running tests with coverage:
 
 ```bash
-./run_tests.sh [category]
+coverage run -m pytest
+coverage report
+coverage html  # Creates an HTML report in htmlcov/
 ```
 
-Where category is one of: url, security, responsive, features, performance, forms, mobile, api
+You can run specific test categories using markers:
+
+```bash
+# Run only unit tests
+python -m pytest -m unit
+
+# Run only integration tests
+python -m pytest -m integration
+```
+
+Or run tests from specific modules:
+
+```bash
+python -m pytest core/tests/test_urls.py
+```
+
+For more details on testing practices and organization, see the [Testing Guidelines](./testing_guidelines.md) document.

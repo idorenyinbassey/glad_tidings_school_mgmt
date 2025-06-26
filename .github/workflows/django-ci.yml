@@ -41,7 +41,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install flake8 pytest pytest-django coverage
+        pip install flake8 pytest pytest-django pytest-cov coverage
         
     - name: Lint with flake8
       run: |
@@ -53,8 +53,12 @@ jobs:
         DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_db
         DJANGO_SETTINGS_MODULE: glad_school_portal.settings
         SECRET_KEY: testsecretkey
+        PYTHONPATH: ${{ github.workspace }}
       run: |
-        coverage run --source='.' manage.py test
+        # First make sure we can discover the tests properly
+        python -m pytest --collect-only
+        # Run tests with coverage
+        coverage run -m pytest
         coverage report
         
     - name: Upload coverage report artifact

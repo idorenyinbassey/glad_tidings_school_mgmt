@@ -2,8 +2,13 @@ from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 
+# Import pytest markers
+import pytest
+
 User = get_user_model()
 
+# Mark as a basic test
+@pytest.mark.unit
 class BasicTests(TestCase):
     def setUp(self):
         # Create a test user
@@ -28,6 +33,7 @@ class BasicTests(TestCase):
             username="testuser",
             password="testpassword123"
         )
+        self.assertTrue(login_successful)
         self.assertTrue(login_successful)
 
     def test_dashboard_redirect_when_logged_in(self):
