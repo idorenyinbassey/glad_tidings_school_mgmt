@@ -30,10 +30,10 @@ jobs:
           --health-retries 5
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
         
@@ -58,7 +58,7 @@ jobs:
         coverage report
         
     - name: Upload coverage report artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: coverage-report
         path: htmlcov/
@@ -67,10 +67,10 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: '3.9'
           
@@ -100,7 +100,7 @@ jobs:
           tar -czvf deployment/app.tar.gz .
           
       - name: Upload build artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: app-bundle
           path: deployment/
@@ -112,7 +112,7 @@ jobs:
   #   runs-on: ubuntu-latest
   #   steps:
   #     - name: Download built app
-  #       uses: actions/download-artifact@v3
+  #       uses: actions/download-artifact@v4
   #       with:
   #         name: app-bundle
   #         path: ./
