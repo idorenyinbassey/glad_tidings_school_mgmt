@@ -1,0 +1,317 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h1 class="card-title mb-0">Welcome, {{ user.first_name }}!</h1>
+                    <p class="text-muted">{{ user.get_role_display }} Dashboard</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">Server Status</h5>
+                    <div class="d-flex align-items-center">
+                        <div class="p-3 bg-primary text-white rounded me-3">
+                            <i class="fas fa-server"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">98.7%</h3>
+                            <p class="text-muted mb-0">Uptime</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-success">Open Tickets</h5>
+                    <div class="d-flex align-items-center">
+                        <div class="p-3 bg-success text-white rounded me-3">
+                            <i class="fas fa-ticket-alt"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">12</h3>
+                            <p class="text-muted mb-0">Support tickets</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">Database Size</h5>
+                    <div class="d-flex align-items-center">
+                        <div class="p-3 bg-warning text-dark rounded me-3">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">4.2 GB</h3>
+                            <p class="text-muted mb-0">60% used</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">User Accounts</h5>
+                    <div class="d-flex align-items-center">
+                        <div class="p-3 bg-danger text-white rounded me-3">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">1,324</h3>
+                            <p class="text-muted mb-0">Active users</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">System Health</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Service</th>
+                                            <th>Status</th>
+                                            <th>CPU</th>
+                                            <th>Memory</th>
+                                            <th>Last Check</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Web Server</td>
+                                            <td><span class="badge bg-success">Online</span></td>
+                                            <td>
+                                                <div class="progress" style="height: 6px;">
+                                                    <div class="progress-bar bg-success" style="width: 25%;" role="progressbar"></div>
+                                                </div>
+                                                <small class="text-muted">25%</small>
+                                            </td>
+                                            <td>
+                                                <div class="progress" style="height: 6px;">
+                                                    <div class="progress-bar bg-success" style="width: 30%;" role="progressbar"></div>
+                                                </div>
+                                                <small class="text-muted">30%</small>
+                                            </td>
+                                            <td>5 min ago</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Database Server</td>
+                                            <td><span class="badge bg-success">Online</span></td>
+                                            <td>
+                                                <div class="progress" style="height: 6px;">
+                                                    <div class="progress-bar bg-warning" style="width: 65%;" role="progressbar"></div>
+                                                </div>
+                                                <small class="text-muted">65%</small>
+                                            </td>
+                                            <td>
+                                                <div class="progress" style="height: 6px;">
+                                                    <div class="progress-bar bg-warning" style="width: 70%;" role="progressbar"></div>
+                                                </div>
+                                                <small class="text-muted">70%</small>
+                                            </td>
+                                            <td>5 min ago</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Email Server</td>
+                                            <td><span class="badge bg-success">Online</span></td>
+                                            <td>
+                                                <div class="progress" style="height: 6px;">
+                                                    <div class="progress-bar bg-success" style="width: 20%;" role="progressbar"></div>
+                                                </div>
+                                                <small class="text-muted">20%</small>
+                                            </td>
+                                            <td>
+                                                <div class="progress" style="height: 6px;">
+                                                    <div class="progress-bar bg-success" style="width: 35%;" role="progressbar"></div>
+                                                </div>
+                                                <small class="text-muted">35%</small>
+                                            </td>
+                                            <td>5 min ago</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <a href="{% url 'itsupport:system_health' %}" class="btn btn-sm btn-outline-primary">View detailed system health</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="card-title mb-0">Recent Troubleshooting Logs</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>Type</th>
+                                            <th>Source</th>
+                                            <th>Message</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>10:23 AM</td>
+                                            <td><span class="badge bg-warning">Warning</span></td>
+                                            <td>Database</td>
+                                            <td>High query response time detected</td>
+                                        </tr>
+                                        <tr>
+                                            <td>09:45 AM</td>
+                                            <td><span class="badge bg-success">Info</span></td>
+                                            <td>System</td>
+                                            <td>Scheduled backup completed successfully</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Yesterday</td>
+                                            <td><span class="badge bg-danger">Error</span></td>
+                                            <td>Application</td>
+                                            <td>Failed login attempt detected</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <a href="{% url 'itsupport:troubleshooting' %}" class="btn btn-sm btn-outline-info">View all logs</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="card-title mb-0">User Access Requests</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group">
+                                <a href="{% url 'itsupport:access_requests' %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Password Reset</h6>
+                                        <small class="text-danger">Urgent</small>
+                                    </div>
+                                    <p class="mb-1">Teacher requires password reset for admin access.</p>
+                                    <small class="text-muted">Requested 30 minutes ago</small>
+                                </a>
+                                <a href="{% url 'itsupport:access_requests' %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">New User Creation</h6>
+                                        <small class="text-warning">Medium</small>
+                                    </div>
+                                    <p class="mb-1">Create accounts for 5 new students.</p>
+                                    <small class="text-muted">Requested 2 hours ago</small>
+                                </a>
+                                <a href="{% url 'itsupport:access_requests' %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Permission Update</h6>
+                                        <small class="text-info">Low</small>
+                                    </div>
+                                    <p class="mb-1">Update accounting access for finance staff.</p>
+                                    <small class="text-muted">Requested 1 day ago</small>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <a href="{% url 'itsupport:access_requests' %}" class="btn btn-sm btn-outline-danger">View all requests</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-12 mb-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="card-title mb-0">Bug Reports</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group">
+                                <a href="{% url 'itsupport:bug_reports' %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Assignment Upload Error</h6>
+                                        <span class="badge bg-danger">Critical</span>
+                                    </div>
+                                    <p class="mb-1">Students unable to upload assignments in Grade 11.</p>
+                                </a>
+                                <a href="{% url 'itsupport:bug_reports' %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Calendar Display Issue</h6>
+                                        <span class="badge bg-warning">High</span>
+                                    </div>
+                                    <p class="mb-1">Events not displaying correctly in school calendar.</p>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <a href="{% url 'itsupport:bug_reports' %}" class="btn btn-sm btn-outline-warning">View all bug reports</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-12">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="card-title mb-0">Quick Links</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="/admin/" class="btn btn-outline-secondary">
+                                    <i class="fas fa-cog me-2"></i>System Settings
+                                </a>
+                                <a href="{% url 'profile' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-user me-2"></i>My Profile
+                                </a>
+                                <a href="/admin/auth/user/" class="btn btn-outline-secondary">
+                                    <i class="fas fa-users me-2"></i>User Management
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include a Chart.js script for system monitoring visualization -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+<script>
+// We would initialize charts here in a real application
+</script>
+{% endblock %}

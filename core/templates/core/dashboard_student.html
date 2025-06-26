@@ -1,0 +1,200 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h1 class="card-title mb-0">Welcome, {{ user.first_name }}!</h1>
+                    <p class="text-muted">{{ user.get_role_display }} Dashboard</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="row mb-4">
+                <div class="col-md-6 mb-4 mb-md-0">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">Upcoming Assignments</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group">
+                                <a href="{% url 'students:assignments' %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Mathematics - Algebraic Expressions</h6>
+                                        <small class="text-danger">Due Tomorrow</small>
+                                    </div>
+                                    <p class="mb-1 text-muted">Complete exercises 5-10</p>
+                                </a>
+                                <a href="{% url 'students:assignments' %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">English - Book Report</h6>
+                                        <small class="text-warning">Due in 3 days</small>
+                                    </div>
+                                    <p class="mb-1 text-muted">Write a report on "To Kill a Mockingbird"</p>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <a href="{% url 'students:assignments' %}" class="btn btn-sm btn-outline-primary">View all assignments</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="card-title mb-0">Recent Results</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group">
+                                <a href="{% url 'students:results' %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Science Quiz</h6>
+                                        <span class="badge bg-success">90%</span>
+                                    </div>
+                                    <p class="mb-1 text-muted">Ecology and Environment</p>
+                                </a>
+                                <a href="{% url 'students:results' %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">History Test</h6>
+                                        <span class="badge bg-warning">75%</span>
+                                    </div>
+                                    <p class="mb-1 text-muted">World War II</p>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <a href="{% url 'students:results' %}" class="btn btn-sm btn-outline-success">View all results</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="card-title mb-0">Class Schedule - Today</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>Subject</th>
+                                            <th>Teacher</th>
+                                            <th>Room</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>8:00 - 9:00</td>
+                                            <td>Mathematics</td>
+                                            <td>Mr. Johnson</td>
+                                            <td>Room 101</td>
+                                        </tr>
+                                        <tr>
+                                            <td>9:10 - 10:10</td>
+                                            <td>English</td>
+                                            <td>Mrs. Smith</td>
+                                            <td>Room 203</td>
+                                        </tr>
+                                        <tr>
+                                            <td>10:20 - 11:20</td>
+                                            <td>Physics</td>
+                                            <td>Dr. Williams</td>
+                                            <td>Lab 3</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <a href="{% url 'academics:timetable' %}" class="btn btn-sm btn-outline-info">View full timetable</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mt-4 mt-lg-0">
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="card-title mb-0">Announcements</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group">
+                                <a href="{% url 'notifications' %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Sports Day</h6>
+                                        <small class="text-muted">2 days ago</small>
+                                    </div>
+                                    <p class="mb-1">Annual sports day will be held on July 15th.</p>
+                                </a>
+                                <a href="{% url 'notifications' %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Parent-Teacher Meeting</h6>
+                                        <small class="text-muted">1 week ago</small>
+                                    </div>
+                                    <p class="mb-1">Scheduled for July 20th from 9 AM to 3 PM.</p>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <a href="{% url 'notifications' %}" class="btn btn-sm btn-outline-warning">View all announcements</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-12 mb-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="card-title mb-0">Attendance Summary</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center mb-3">
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 92%;" aria-valuenow="92" aria-valuemin="0" aria-valuemax="100">92%</div>
+                                </div>
+                                <small class="text-muted">Term attendance percentage</small>
+                            </div>
+                            <p>Days Present: 46<br>Days Absent: 4</p>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <a href="{% url 'students:attendance' %}" class="btn btn-sm btn-outline-danger">View details</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="card-title mb-0">Quick Links</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'academics:elibrary' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-book me-2"></i>E-Library
+                                </a>
+                                <a href="{% url 'cbt:exams' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-edit me-2"></i>Online Exams
+                                </a>
+                                <a href="{% url 'profile' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-user me-2"></i>My Profile
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

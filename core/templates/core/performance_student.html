@@ -1,0 +1,36 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2>My Performance Analytics</h2>
+    <h4>Academic Status</h4>
+    <ul>
+        {% for status in academic_statuses %}
+        <li>{{ status.session }} {{ status.term }}: {{ status.current_class }} - Promoted: {{ status.promoted }}</li>
+        {% endfor %}
+    </ul>
+    <h4>Attendance</h4>
+    <ul>
+        {% for record in attendance_records %}
+        <li>{{ record.date }}: {{ record.present|yesno:"Present,Absent" }}</li>
+        {% endfor %}
+    </ul>
+    <h4>Assignment Submissions</h4>
+    <ul>
+        {% for sub in submissions %}
+        <li>{{ sub.assignment.title }}: Grade: {{ sub.grade }} Feedback: {{ sub.feedback }}</li>
+        {% endfor %}
+    </ul>
+    <h4>CBT Results</h4>
+    <ul>
+        {% for cbt in cbt_sessions %}
+        <li>{{ cbt.exam.title }}: Score: {{ cbt.score }}</li>
+        {% endfor %}
+    </ul>
+    <h4>Teacher Performance Remarks</h4>
+    <ul>
+        {% for perf in performances %}
+        <li>{{ perf.subject }}: {{ perf.score }} - {{ perf.remarks }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

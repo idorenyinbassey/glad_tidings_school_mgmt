@@ -1,0 +1,26 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Dashboard</h2>
+    <div class="row">
+        <div class="col-md-3 mb-3">
+            <a href="/admin/" class="btn btn-outline-primary btn-block">Admin Panel</a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="/students/" class="btn btn-outline-success btn-block">Student Management</a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="/staff/" class="btn btn-outline-warning btn-block">Staff Management</a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="/accounting/" class="btn btn-outline-info btn-block">Accounting</a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="/academics/" class="btn btn-outline-secondary btn-block">Academics</a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="/itsupport/" class="btn btn-outline-dark btn-block">IT Support</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

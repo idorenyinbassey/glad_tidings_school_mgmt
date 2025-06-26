@@ -1,0 +1,13 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2>My Attendance</h2>
+    <ul class="list-group">
+        {% for rec in records %}
+        <li class="list-group-item">{{ rec.date }}: {{ rec.present|yesno:"Present,Absent" }}</li>
+        {% empty %}
+        <li class="list-group-item">No attendance records found.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
