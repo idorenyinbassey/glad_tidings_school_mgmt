@@ -1,0 +1,187 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Accounting & Finance - Glad Tidings School Portal{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12 mb-4">
+            <h2 class="border-bottom pb-2">Accounting & Finance</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-file-invoice-dollar me-2"></i> Fee Management</h5>
+                    <p class="card-text">Manage student fees, invoices, and payments.</p>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <a href="{% url 'fees' %}" class="btn btn-primary btn-sm stretched-link">Fee Management</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-chart-pie me-2"></i> Financial Reports</h5>
+                    <p class="card-text">View and generate financial reports and statements.</p>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <a href="{% url 'reports' %}" class="btn btn-primary btn-sm stretched-link">View Reports</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-money-bill-wave me-2"></i> Payroll</h5>
+                    <p class="card-text">Manage staff payroll and salary information.</p>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <a href="#" class="btn btn-primary btn-sm stretched-link">Payroll System</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-hand-holding-usd me-2"></i> Scholarships</h5>
+                    <p class="card-text">Manage student scholarships and financial aid.</p>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <a href="#" class="btn btn-primary btn-sm stretched-link">Scholarship Portal</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Recent Transactions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>2025-06-15</td>
+                                    <td>Term 3 Fee Payment</td>
+                                    <td><span class="badge bg-success">Income</span></td>
+                                    <td>₦250,000</td>
+                                </tr>
+                                <tr>
+                                    <td>2025-06-10</td>
+                                    <td>Staff Salary</td>
+                                    <td><span class="badge bg-danger">Expense</span></td>
+                                    <td>₦375,000</td>
+                                </tr>
+                                <tr>
+                                    <td>2025-06-05</td>
+                                    <td>Building Maintenance</td>
+                                    <td><span class="badge bg-danger">Expense</span></td>
+                                    <td>₦95,000</td>
+                                </tr>
+                                <tr>
+                                    <td>2025-06-01</td>
+                                    <td>Book Sales</td>
+                                    <td><span class="badge bg-success">Income</span></td>
+                                    <td>₦42,000</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="#" class="btn btn-sm btn-outline-primary">View All Transactions</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Financial Summary</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="financialSummary" width="400" height="250"></canvas>
+                </div>
+                <div class="card-footer">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h6>Total Income</h6>
+                            <h5 class="text-success">₦12.4M</h5>
+                        </div>
+                        <div class="col-4">
+                            <h6>Total Expenses</h6>
+                            <h5 class="text-danger">₦8.2M</h5>
+                        </div>
+                        <div class="col-4">
+                            <h6>Balance</h6>
+                            <h5 class="text-primary">₦4.2M</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('financialSummary').getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['January', 'February', 'March', 'April', 'May', 'June'],
+                datasets: [{
+                    label: 'Income',
+                    data: [1800000, 2100000, 1950000, 2300000, 2150000, 2100000],
+                    backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                    borderColor: 'rgba(40, 167, 69, 1)',
+                    borderWidth: 1
+                }, {
+                    label: 'Expenses',
+                    data: [1200000, 1350000, 1500000, 1400000, 1300000, 1450000],
+                    backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                    borderColor: 'rgba(220, 53, 69, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            // Format the ticks to show in millions (₦)
+                            callback: function(value) {
+                                return '₦' + (value / 1000000).toFixed(1) + 'M';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
