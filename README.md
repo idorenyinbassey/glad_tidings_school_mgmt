@@ -29,7 +29,7 @@ A comprehensive school management system built with Django, featuring role-based
 
 ## Technologies Used
 
-- **Backend**: Django 5.2.3, Python 3.13.5
+- **Backend**: Django 4.2.23, Python 3.9
 - **Database**: SQLite (development), PostgreSQL (production)
 - **Frontend**: HTML5, CSS3, JavaScript, Bootstrap 5
 - **Authentication**: Django Authentication System

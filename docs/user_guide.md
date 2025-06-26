@@ -271,7 +271,7 @@ For detailed instructions on managing profiles, see the [Profile Management Guid
 ### System Requirements
 
 - Python 3.8 or higher
-- Django 5.2.3
+- Django 4.2.23
 - PostgreSQL (recommended for production) or SQLite (development)
 - Modern web browser (Chrome, Firefox, Edge, Safari)
 

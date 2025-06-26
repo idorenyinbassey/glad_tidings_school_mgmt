@@ -1,26 +1,26 @@
 # Core dependencies
-Django==5.2.3
-Pillow==10.1.0  # For image processing
-python-dateutil==2.9.0  # For date manipulation
-pytz==2025.2  # For timezone support
+Django==4.2.23  # Latest stable version as of June 2025
+Pillow==10.0.0  # For image processing
+python-dateutil==2.8.2  # For date manipulation
+pytz==2023.3  # For timezone support
 
 # Database adapters
 psycopg2-binary==2.9.9  # PostgreSQL adapter for production
 dj-database-url==2.1.0  # Database URL configuration
 
 # Authentication and security
-django-allauth==1.1.0  # For social authentication
-django-two-factor-auth==1.15.5  # For 2FA
-oauthlib==3.2.2  # OAuth support
-django-cors-headers==4.3.1  # For handling CORS
+django-allauth==0.58.2  # For social authentication
+django-two-factor-auth==1.15.4  # For 2FA
+oauthlib==3.2.2  # OAuth support 
+django-cors-headers==4.2.0  # For handling CORS
 
 # Forms and data validation
 django-crispy-forms==2.1  # Better form rendering
 crispy-bootstrap5==2022.1  # Bootstrap 5 template pack for crispy forms
-django-filter==23.5  # For filtering querysets in views
+django-filter==23.3  # For filtering querysets in views
 
 # API
-djangorestframework==3.15.0  # For REST APIs
+djangorestframework==3.14.0  # For REST APIs
 markdown==3.6  # For API documentation
 django-rest-swagger==2.2.0  # Swagger API documentation
 
