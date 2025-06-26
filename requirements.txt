@@ -1,5 +1,8 @@
 # Core dependencies
-Django==4.2.23  # Latest stable version as of June 2025
+Django==5.2.3  # Latest stable version as of June 2025
+django-environ==0.11.2  # Environment variable configuration
+django-redis==5.4.0  # Redis cache backend
+django-csp==3.8  # Content Security Policy support
 Pillow==10.0.0  # For image processing
 python-dateutil==2.8.2  # For date manipulation
 pytz==2023.3  # For timezone support
