@@ -12,17 +12,24 @@ class TuitionFee(models.Model):
     ]
     
     student = models.ForeignKey('students.StudentProfile', on_delete=models.CASCADE, related_name='tuition_fees')
-    session = models.CharField(max_length=20)
-    term = models.CharField(max_length=20)
+    session = models.CharField(max_length=20, db_index=True)  # Added index for improved querying
+    term = models.CharField(max_length=20, db_index=True)  # Added index for improved querying
     amount_due = models.DecimalField(max_digits=10, decimal_places=2)
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    due_date = models.DateField()
+    due_date = models.DateField(db_index=True)  # Added index for due date filtering
     paid_date = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=20, default='unpaid', choices=STATUS_CHOICES)
+    status = models.CharField(max_length=20, default='unpaid', choices=STATUS_CHOICES, db_index=True)  # Added index for status filtering
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='tuitionfee_created')
     updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='tuitionfee_updated')
+    
+    class Meta:
+        # Composite index for commonly queried combinations
+        indexes = [
+            models.Index(fields=['student', 'session', 'term']),
+            models.Index(fields=['status', 'due_date']),
+        ]
 
     def __str__(self):
         return f"{self.student} - {self.session} {self.term} - {self.status}"
@@ -86,16 +93,20 @@ class Payment(models.Model):
     ]
     tuition_fee = models.ForeignKey(TuitionFee, on_delete=models.CASCADE, related_name='payments')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_date = models.DateField()
-    method = models.CharField(max_length=50, choices=PAYMENT_METHODS)
-    receipt_number = models.CharField(max_length=50, blank=True)
-    reference = models.CharField(max_length=100, blank=True)
+    payment_date = models.DateField(db_index=True)  # Add index for payment date
+    method = models.CharField(max_length=50, choices=PAYMENT_METHODS, db_index=True)  # Add index for filtering by method
+    receipt_number = models.CharField(max_length=50, blank=True, db_index=True)  # Add index for searching by receipt
+    reference = models.CharField(max_length=100, blank=True, db_index=True)  # Add index for searching by reference
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='payment_created')
     
     class Meta:
         ordering = ['-payment_date', '-created_at']
+        indexes = [
+            models.Index(fields=['payment_date', 'method']),
+            models.Index(fields=['created_at', 'created_by']),
+        ]
 
     def __str__(self):
         return f"{self.tuition_fee} - {self.amount} on {self.payment_date}"
@@ -152,10 +163,16 @@ class Expense(models.Model):
     ]
     description = models.CharField(max_length=200)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    date = models.DateField()
-    category = models.CharField(max_length=100, choices=EXPENSE_CATEGORIES)
+    date = models.DateField(db_index=True)  # Add index for date filtering
+    category = models.CharField(max_length=100, choices=EXPENSE_CATEGORIES, db_index=True)  # Add index for category filtering
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='expense_created')
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['date', 'category']),
+            models.Index(fields=['created_at']),
+        ]
 
     def __str__(self):
         return f"{self.description} - {self.amount} on {self.date}"

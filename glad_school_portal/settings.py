@@ -11,21 +11,48 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import environ
+import os
+
+# Initialize environ
+env = environ.Env(
+    # Set casting and default values
+    DEBUG=(bool, False),
+    SECURE_SSL_REDIRECT=(bool, True),
+    SESSION_COOKIE_SECURE=(bool, True),
+    CSRF_COOKIE_SECURE=(bool, True),
+)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Take environment variables from .env file if it exists
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-l9=4ug$^4alb4#1bi%_cm$%$qxz0qt&y#7fx=@m2l&bahreje4'
+# Get from environment variable or use default in development only
+SECRET_KEY = env('SECRET_KEY', default='jxxvv1@krq2_op!z+2=@k@0aj_e_&(4$c@v_qm=4za9z+idk^b')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Get from environment variable or default to False
+DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '.localhost', 'testserver']
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost', '.localhost', 'testserver', 'gladtidingsschool.example'])
+
+# Security settings - controlled by environment variables
+SECURE_SSL_REDIRECT = env('SECURE_SSL_REDIRECT')
+SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE')
+CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE')
+SECURE_HSTS_SECONDS = env.int('SECURE_HSTS_SECONDS', default=31536000)  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True)
+SECURE_HSTS_PRELOAD = env.bool('SECURE_HSTS_PRELOAD', default=True)
+SECURE_BROWSER_XSS_FILTER = env.bool('SECURE_BROWSER_XSS_FILTER', default=True)
+SECURE_CONTENT_TYPE_NOSNIFF = env.bool('SECURE_CONTENT_TYPE_NOSNIFF', default=True)
+X_FRAME_OPTIONS = env('X_FRAME_OPTIONS', default='DENY')
 
 
 # Application definition
@@ -37,6 +64,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Third-party apps
+    'django_redis',  # Redis cache backend
+    'csp',  # Content Security Policy
+    # Project apps
     'core',  # Added core app
     'users',  # Added users app
     'students',  # Added students app
@@ -50,13 +81,21 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # Add UpdateCacheMiddleware at the beginning and FetchFromCacheMiddleware after CommonMiddleware
+    'django.middleware.cache.UpdateCacheMiddleware' if not DEBUG else None,
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'django.middleware.cache.FetchFromCacheMiddleware' if not DEBUG else None,
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Content Security Policy
+    'csp.middleware.CSPMiddleware',
 ]
+
+# Remove None values from MIDDLEWARE
+MIDDLEWARE = [middleware for middleware in MIDDLEWARE if middleware is not None]
 
 ROOT_URLCONF = 'glad_school_portal.urls'
 
@@ -64,12 +103,23 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [BASE_DIR / 'core' / 'templates'],
-        'APP_DIRS': True,
+        'APP_DIRS': False,  # Set to False when using custom loaders
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.debug',
+            ],
+            # Enable template caching in production
+            'loaders': [
+                # Use cached template loader in production for better performance
+                ('django.template.loaders.cached.Loader', [
+                    'django.template.loaders.filesystem.Loader',
+                    'django.template.loaders.app_directories.Loader',
+                ]) if not DEBUG else
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
             ],
         },
     },
@@ -81,12 +131,20 @@ WSGI_APPLICATION = 'glad_school_portal.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Parse database configuration from DATABASE_URL environment variable
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': env.db(default='sqlite:///db.sqlite3')
 }
+
+# Database performance optimizations
+DATABASES['default']['CONN_MAX_AGE'] = env.int('DB_CONN_MAX_AGE', default=60) # Keep connections alive for 60 seconds
+DATABASES['default']['OPTIONS'] = {
+    'timeout': 30,  # 30 seconds timeout
+}
+
+# Use persistent connections in production
+if not DEBUG:
+    DATABASES['default']['CONN_MAX_AGE'] = 600  # 10 minutes
 
 
 # Password validation
@@ -117,17 +175,16 @@ LOGIN_URL = 'login'
 # Base URL for generating absolute URLs in emails
 BASE_URL = 'http://gladtidingsschool.example'  # Change this in production
 
-# Email settings (for password reset, console backend for development)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-# In production, use SMTP backend:
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.your-email-provider.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'your-email@example.com'
-# EMAIL_HOST_PASSWORD = 'your-email-password'
-DEFAULT_FROM_EMAIL = 'Glad Tidings School <noreply@gladtidingsschool.example>'
-SCHOOL_SUPPORT_EMAIL = 'support@gladtidingsschool.example'
+# Email settings - use environment variables in production
+# Select email backend based on DEBUG setting
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.your-email-provider.com')
+EMAIL_PORT = env.int('EMAIL_PORT', default=587)
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='Glad Tidings School <noreply@gladtidingsschool.example>')
+SCHOOL_SUPPORT_EMAIL = env('SCHOOL_SUPPORT_EMAIL', default='support@gladtidingsschool.example')
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -195,3 +252,43 @@ LOGGING = {
 # Create logs directory if it doesn't exist
 import os
 os.makedirs(BASE_DIR / 'logs', exist_ok=True)
+
+# Cache settings
+# Use Redis in production, local memory cache in development
+if not DEBUG:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': env('REDIS_URL', default='redis://127.0.0.1:6379/1'),
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            }
+        }
+    }
+    # Cache session if Redis is available
+    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+    SESSION_CACHE_ALIAS = 'default'
+else:
+    # Use local memory cache in development
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        }
+    }
+
+# Cache timeout settings
+CACHE_MIDDLEWARE_SECONDS = 60 * 15  # 15 minutes
+CACHE_MIDDLEWARE_KEY_PREFIX = 'glad_tidings'
+
+# Content Security Policy
+if not DEBUG:
+    # Strict CSP in production
+    CSP_DEFAULT_SRC = ("'self'",)
+    CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")  # Allow inline styles
+    CSP_SCRIPT_SRC = ("'self'",)  # Only allow scripts from same origin
+    CSP_FONT_SRC = ("'self'", "data:",)  # Allow fonts from data URIs
+    CSP_IMG_SRC = ("'self'", "data:",)  # Allow images from data URIs
+    CSP_CONNECT_SRC = ("'self'",)  # Only allow connections to same origin
+else:
+    # More relaxed CSP in development
+    CSP_DEFAULT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'")
