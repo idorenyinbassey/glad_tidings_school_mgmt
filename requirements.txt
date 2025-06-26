@@ -15,7 +15,7 @@ oauthlib==3.2.2  # OAuth support
 django-cors-headers==4.2.0  # For handling CORS
 
 # Forms and data validation
-django-crispy-forms==2.1  # Better form rendering
+django-crispy-forms==2.3  # Better form rendering
 crispy-bootstrap5==2025.6  # Bootstrap 5 template pack for crispy forms
 django-filter==23.3  # For filtering querysets in views
 
