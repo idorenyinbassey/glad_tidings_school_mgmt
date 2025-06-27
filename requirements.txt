@@ -1,64 +1,19 @@
-# Core dependencies
-Django==5.2.3  # Latest stable version as of June 2025
-django-environ==0.11.2  # Environment variable configuration
-django-redis==5.4.0  # Redis cache backend
-django-csp==3.8  # Content Security Policy support
-Pillow==10.0.0  # For image processing
-python-dateutil==2.8.2  # For date manipulation
-pytz==2023.3  # For timezone support
-
-# Database adapters
-psycopg2-binary==2.9.9  # PostgreSQL adapter for production
-dj-database-url==2.1.0  # Database URL configuration
-
-# Authentication and security
-django-allauth==0.58.2  # For social authentication
-django-two-factor-auth==1.15.4  # For 2FA
-oauthlib==3.2.2  # OAuth support 
-django-cors-headers==4.2.0  # For handling CORS
-
-# Forms and data validation
-django-crispy-forms==2.3  # Better form rendering
-crispy-bootstrap5==2025.6  # Bootstrap 5 template pack for crispy forms
-django-filter==23.3  # For filtering querysets in views
-
-# API
-djangorestframework==3.14.0  # For REST APIs
-markdown==3.5  # For API documentation
-drf-yasg==1.21.7  # Swagger API documentation (django-rest-swagger is deprecated)
-
-# File handling
-django-storages==1.14.2  # For file storage backends like AWS S3
-boto3==1.28.57  # AWS SDK for Python
-
-# Testing
-pytest==8.0.0  # Test runner
-pytest-django==4.8.0  # Django integration for pytest
-pytest-cov==4.1.0  # Coverage plugin for pytest
-
-# Caching and performance
-django-redis==5.4.0  # Redis cache backend
-whitenoise==6.6.0  # Serving static files efficiently
-
-# Background tasks
-celery==5.3.6  # For background task processing
-redis==5.0.1  # Redis client for Celery
-django-celery-beat==2.5.0  # Periodic tasks for Celery
-
-# Deployment and production
-gunicorn==21.2.0  # WSGI HTTP Server
-python-dotenv==1.0.0  # Environment variable management
-sentry-sdk==1.40.5  # Error tracking
-
-# Testing and debugging
-pytest==7.4.3
-pytest-django==4.7.0
-coverage==7.4.1
-factory-boy==3.3.0
-faker==19.3.0
-django-debug-toolbar==4.3.0
-
-# Development tools
-flake8==6.1.0
-black==23.11.0
-isort==5.12.0
+asgiref==3.8.1
+colorama==0.4.6
+coverage==7.9.1
+Django==5.2.3
+django-csp==4.0
+django-environ==0.12.0
+django-redis==6.0.0
+iniconfig==2.1.0
+packaging==25.0
+pillow==11.2.1
+pluggy==1.6.0
+psycopg2-binary==2.9.10
+Pygments==2.19.2
+pytest==8.4.1
+pytest-cov==6.2.1
+pytest-django==4.11.1
+redis==6.2.0
+sqlparse==0.5.3
+tzdata==2025.2
