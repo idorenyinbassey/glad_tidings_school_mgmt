@@ -28,6 +28,8 @@ A comprehensive school management system built with Django, featuring role-based
 - [Developer Guide](docs/developer_guide.md): Technical documentation for developers
 - [Adding Users Guide](docs/adding_users_guide.md): Quick reference for user management
 - [Security & Performance](docs/security_performance.md): Security features and optimizations
+- [Superuser Roles](docs/superuser_roles.md): Guide for managing superuser roles
+- [User Model Fixes](docs/user_model_fixes.md): Documentation about fixes to the user model and manager
 
 ## Technologies Used
 
