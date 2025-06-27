@@ -15,9 +15,9 @@ psycopg2-binary>=2.9.0  # PostgreSQL adapter
 redis>=6.2.0  # Redis client
 
 # Testing and debugging
-pytest>=8.0.0  # Test runner
-pytest-cov>=6.0.0  # Coverage plugin for pytest
-pytest-django>=4.11.0  # Django integration for pytest
+pytest  # Test runner
+pytest-cov  # Coverage plugin for pytest
+pytest-django  # Django integration for pytest
 coverage>=7.9.0  # Code coverage measurement tool
 Pygments>=2.19.0  # Syntax highlighting for test output
 
