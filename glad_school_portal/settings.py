@@ -138,9 +138,16 @@ DATABASES = {
 
 # Database performance optimizations
 DATABASES['default']['CONN_MAX_AGE'] = env.int('DB_CONN_MAX_AGE', default=60) # Keep connections alive for 60 seconds
-DATABASES['default']['OPTIONS'] = {
-    'timeout': 30,  # 30 seconds timeout
-}
+# PostgreSQL-specific connection options (connect_timeout is in seconds)
+if DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
+    DATABASES['default']['OPTIONS'] = {
+        'connect_timeout': 30,  # 30 seconds timeout (PostgreSQL specific)
+    }
+# SQLite-specific connection options
+elif DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
+    DATABASES['default']['OPTIONS'] = {
+        'timeout': 30,  # 30 seconds timeout (SQLite specific)
+    }
 
 # Use persistent connections in production
 if not DEBUG:
