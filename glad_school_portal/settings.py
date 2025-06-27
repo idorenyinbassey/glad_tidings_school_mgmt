@@ -18,9 +18,9 @@ import os
 env = environ.Env(
     # Set casting and default values
     DEBUG=(bool, False),
-    SECURE_SSL_REDIRECT=(bool, True),
-    SESSION_COOKIE_SECURE=(bool, True),
-    CSRF_COOKIE_SECURE=(bool, True),
+    SECURE_SSL_REDIRECT=(bool, False),  # Disabled for development
+    SESSION_COOKIE_SECURE=(bool, False),  # Disabled for development
+    CSRF_COOKIE_SECURE=(bool, False),  # Disabled for development
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -38,8 +38,8 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env('SECRET_KEY', default='jxxvv1@krq2_op!z+2=@k@0aj_e_&(4$c@v_qm=4za9z+idk^b')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# Get from environment variable or default to False
-DEBUG = env('DEBUG')
+# Explicitly set to True for development
+DEBUG = True
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost', '.localhost', 'testserver', 'gladtidingsschool.example'])
 
@@ -47,9 +47,9 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost', '.l
 SECURE_SSL_REDIRECT = env('SECURE_SSL_REDIRECT')
 SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE')
 CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE')
-SECURE_HSTS_SECONDS = env.int('SECURE_HSTS_SECONDS', default=31536000)  # 1 year
-SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True)
-SECURE_HSTS_PRELOAD = env.bool('SECURE_HSTS_PRELOAD', default=True)
+SECURE_HSTS_SECONDS = env.int('SECURE_HSTS_SECONDS', default=0)  # Disabled for development
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=False)
+SECURE_HSTS_PRELOAD = env.bool('SECURE_HSTS_PRELOAD', default=False)
 SECURE_BROWSER_XSS_FILTER = env.bool('SECURE_BROWSER_XSS_FILTER', default=True)
 SECURE_CONTENT_TYPE_NOSNIFF = env.bool('SECURE_CONTENT_TYPE_NOSNIFF', default=True)
 X_FRAME_OPTIONS = env('X_FRAME_OPTIONS', default='DENY')
@@ -96,6 +96,10 @@ MIDDLEWARE = [
 
 # Remove None values from MIDDLEWARE
 MIDDLEWARE = [middleware for middleware in MIDDLEWARE if middleware is not None]
+
+# Remove any SSL redirect middleware in development
+if DEBUG:
+    MIDDLEWARE = [m for m in MIDDLEWARE if not m.endswith('RedirectMiddleware')]
 
 ROOT_URLCONF = 'glad_school_portal.urls'
 
@@ -323,9 +327,13 @@ if not DEBUG:
         }
     }
 else:
-    # More relaxed CSP in development
+    # Very relaxed CSP in development to avoid any blocking issues
     CONTENT_SECURITY_POLICY = {
         'DIRECTIVES': {
-            'default-src': ("'self'", "'unsafe-inline'", "'unsafe-eval'")
+            'default-src': ("'self'", "'unsafe-inline'", "'unsafe-eval'", "data:", "http:", "https:"),
+            'img-src': ("'self'", "data:", "http:", "https:"),
+            'style-src': ("'self'", "'unsafe-inline'", "http:", "https:"),
+            'script-src': ("'self'", "'unsafe-inline'", "'unsafe-eval'", "http:", "https:"),
+            'connect-src': ("'self'", "http:", "https:"),
         }
     }
