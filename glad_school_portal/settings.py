@@ -131,23 +131,44 @@ WSGI_APPLICATION = 'glad_school_portal.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Parse database configuration from DATABASE_URL environment variable
+# Handle database URL parsing with special attention to timeout parameters
+# to prevent the 'invalid dsn: invalid connection option "timeout"' error
+import re
+db_url = env.str('DATABASE_URL', default='sqlite:///db.sqlite3')
+
+# If this is a PostgreSQL URL and contains 'timeout' parameter, replace with 'connect_timeout'
+if ('postgres' in db_url.lower() or 'postgresql' in db_url.lower()) and 'timeout=' in db_url:
+    # Replace timeout parameter with connect_timeout in PostgreSQL URLs
+    db_url = re.sub(r'([?&])timeout=([0-9]+)', r'\1connect_timeout=\2', db_url)
+
+# Parse the sanitized database URL
 DATABASES = {
-    'default': env.db(default='sqlite:///db.sqlite3')
+    'default': env.db_url('DATABASE_URL', default=db_url)
 }
+
+# Double-check that we don't have a 'timeout' parameter in PostgreSQL connections
+# which would cause 'invalid dsn: invalid connection option "timeout"' errors
+if DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
+    # Remove any timeout parameter that might still be in the connection options
+    if 'OPTIONS' in DATABASES['default'] and 'timeout' in DATABASES['default']['OPTIONS']:
+        del DATABASES['default']['OPTIONS']['timeout']
 
 # Database performance optimizations
 DATABASES['default']['CONN_MAX_AGE'] = env.int('DB_CONN_MAX_AGE', default=60) # Keep connections alive for 60 seconds
-# PostgreSQL-specific connection options (connect_timeout is in seconds)
+
+# Configure database-specific options
 if DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
-    DATABASES['default']['OPTIONS'] = {
-        'connect_timeout': 30,  # 30 seconds timeout (PostgreSQL specific)
-    }
-# SQLite-specific connection options
+    # Ensure OPTIONS exists
+    if 'OPTIONS' not in DATABASES['default']:
+        DATABASES['default']['OPTIONS'] = {}
+    # Use connect_timeout for PostgreSQL (not timeout)
+    DATABASES['default']['OPTIONS']['connect_timeout'] = 30
 elif DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
-    DATABASES['default']['OPTIONS'] = {
-        'timeout': 30,  # 30 seconds timeout (SQLite specific)
-    }
+    # Ensure OPTIONS exists
+    if 'OPTIONS' not in DATABASES['default']:
+        DATABASES['default']['OPTIONS'] = {}
+    # Use timeout for SQLite
+    DATABASES['default']['OPTIONS']['timeout'] = 30
 
 # Use persistent connections in production
 if not DEBUG:
@@ -287,15 +308,24 @@ else:
 CACHE_MIDDLEWARE_SECONDS = 60 * 15  # 15 minutes
 CACHE_MIDDLEWARE_KEY_PREFIX = 'glad_tidings'
 
-# Content Security Policy
+# Content Security Policy (updated for django-csp 4.0+)
+# https://django-csp.readthedocs.io/en/latest/migration-guide.html
 if not DEBUG:
     # Strict CSP in production
-    CSP_DEFAULT_SRC = ("'self'",)
-    CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")  # Allow inline styles
-    CSP_SCRIPT_SRC = ("'self'",)  # Only allow scripts from same origin
-    CSP_FONT_SRC = ("'self'", "data:",)  # Allow fonts from data URIs
-    CSP_IMG_SRC = ("'self'", "data:",)  # Allow images from data URIs
-    CSP_CONNECT_SRC = ("'self'",)  # Only allow connections to same origin
+    CONTENT_SECURITY_POLICY = {
+        'DIRECTIVES': {
+            'default-src': ("'self'",),
+            'style-src': ("'self'", "'unsafe-inline'"),  # Allow inline styles
+            'script-src': ("'self'",),  # Only allow scripts from same origin
+            'font-src': ("'self'", "data:"),  # Allow fonts from data URIs
+            'img-src': ("'self'", "data:"),  # Allow images from data URIs
+            'connect-src': ("'self'",),  # Only allow connections to same origin
+        }
+    }
 else:
     # More relaxed CSP in development
-    CSP_DEFAULT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'")
+    CONTENT_SECURITY_POLICY = {
+        'DIRECTIVES': {
+            'default-src': ("'self'", "'unsafe-inline'", "'unsafe-eval'")
+        }
+    }
