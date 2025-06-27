@@ -1,28 +1,28 @@
 # Core dependencies
-Django>=5.2.0,<6.0.0  # Django web framework
-asgiref>=3.8.0  # ASGI utilities for Django
-django-csp>=4.0  # Content Security Policy support
-django-environ>=0.12.0  # Environment variable configuration
-django-redis>=6.0.0  # Redis cache backend for Django
-pillow>=11.0.0  # Python Imaging Library for image processing
-sqlparse>=0.5.0  # SQL parsing library for Django
-tzdata>=2025.0  # Timezone database
+Django  # Django web framework
+asgiref  # ASGI utilities for Django
+django-csp  # Content Security Policy support
+django-environ  # Environment variable configuration
+django-redis  # Redis cache backend for Django
+pillow  # Python Imaging Library for image processing
+sqlparse  # SQL parsing library for Django
+tzdata  # Timezone database
 
 # Database adapters
-psycopg2-binary>=2.9.0  # PostgreSQL adapter
+psycopg2-binary  # PostgreSQL adapter
 
 # Caching and performance
-redis>=6.2.0  # Redis client
+redis  # Redis client
 
 # Testing and debugging
 pytest  # Test runner
 pytest-cov  # Coverage plugin for pytest
 pytest-django  # Django integration for pytest
-coverage>=7.9.0  # Code coverage measurement tool
-Pygments>=2.19.0  # Syntax highlighting for test output
+coverage  # Code coverage measurement tool
+Pygments  # Syntax highlighting for test output
 
 # Development tools
-colorama>=0.4.0  # Colored terminal output
-iniconfig>=2.0.0  # INI file parser used by pytest
-packaging>=25.0  # Utilities for package version handling
-pluggy>=1.6.0  # Plugin management system used by pytest
+colorama  # Colored terminal output
+iniconfig  # INI file parser used by pytest
+packaging  # Utilities for package version handling
+pluggy  # Plugin management system used by pytest
