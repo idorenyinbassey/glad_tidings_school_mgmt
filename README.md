@@ -23,63 +23,50 @@ A comprehensive school management system built with Django, featuring role-based
 
 ## Documentation
 
+- [Installation Guide](docs/INSTALLATION.md): Comprehensive setup instructions
 - [User Guide](docs/user_guide.md): Complete guide for all users
 - [Developer Guide](docs/developer_guide.md): Technical documentation for developers
 - [Adding Users Guide](docs/adding_users_guide.md): Quick reference for user management
+- [Security & Performance](docs/security_performance.md): Security features and optimizations
 
 ## Technologies Used
 
-- **Backend**: Django 4.2.23, Python 3.9
+- **Backend**: Django 5.2, Python 3.9+
 - **Database**: SQLite (development), PostgreSQL (production)
 - **Frontend**: HTML5, CSS3, JavaScript, Bootstrap 5
-- **Authentication**: Django Authentication System
-- **Testing**: Django Test Framework
+- **Authentication**: Django Authentication System with Two-Factor Auth
+- **Caching**: Redis for performance optimization
+- **Testing**: Django Test Framework, pytest
 
-## Setup and Installation
+## Quick Start
 
-### Prerequisites
+For detailed installation instructions, see the [Installation Guide](docs/INSTALLATION.md).
 
-- Python 3.8 or higher
-- pip (Python package manager)
+```bash
+# Clone repository
+git clone https://github.com/idorenyinbassey/glad_tidings_school_mgmt.git
+cd glad_tidings_school_mgmt
 
-### Installation Steps
+# Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate  # or .venv\Scripts\activate on Windows
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/idorenyinbassey/glad_school_mgm.git
-   cd glad_school_mgm
-   ```
+# Install dependencies
+pip install -r requirements.txt
 
-2. Create and activate a virtual environment:
-   ```bash
-   python -m venv .venv
-   # On Windows
-   .venv\Scripts\activate
-   # On Unix/MacOS
-   source .venv/bin/activate
-   ```
+# Configure environment
+cp .env.example .env
+# Edit .env with your settings
 
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+# Set up database
+python manage.py migrate
+python manage.py createsuperuser
 
-4. Apply migrations:
-   ```bash
-   python manage.py migrate
-   ```
+# Run development server
+python manage.py runserver
+```
 
-5. Create a superuser:
-   ```bash
-   python manage.py createsuperuser
-   ```
-
-6. Run the development server:
-   ```bash
-   python manage.py runserver
-   ```
-
-7. Access the application at: http://127.0.0.1:8000/
+Access the application at: http://127.0.0.1:8000/
 
 ## Running Tests
 

@@ -36,7 +36,7 @@ glad_tidings_school_mgmt/
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/idorenyinbassey/glad_tidings_school_mgmt.git
    cd glad_tidings_school_mgmt
    ```
 
@@ -54,7 +54,22 @@ glad_tidings_school_mgmt/
    pip install -r requirements.txt
    ```
 
-4. Create database migrations:
+   > Note: Our requirements.txt file now uses unversioned package names to allow for compatible updates and avoid version conflicts. If you need to lock to specific versions for your environment, use `pip freeze > requirements-locked.txt`.
+
+4. Set up environment variables:
+   ```bash
+   # Copy the example environment file (create one if it doesn't exist)
+   cp .env.example .env
+   
+   # Edit the .env file with your specific configuration:
+   # - Database credentials
+   # - Secret key
+   # - Email settings
+   # - Redis connection (if using caching)
+   # - Other environment-specific settings
+   ```
+
+5. Create database migrations:
    ```bash
    python manage.py makemigrations
    ```
