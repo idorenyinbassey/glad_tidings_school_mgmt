@@ -22,17 +22,17 @@ class APITests(TestCase):
         self.client.login(username="api_test_user", password="apipass123")
     
     def test_api_authentication(self):
-        """Test API authentication"""
+        """Test API authentication using existing endpoints"""
         # Logout to test unauthenticated access
         self.client.logout()
         
-        # Try to access an API endpoint that requires authentication
-        response = self.client.get(reverse('api-endpoint'))  # Replace with your actual API endpoint
+        # Try to access a protected endpoint (notifications unread count)
+        response = self.client.get(reverse('notification_unread_count'))
         # Should redirect to login or return 403/401
         self.assertIn(response.status_code, [302, 401, 403])
         
         # Login and try again
         self.client.login(username="api_test_user", password="apipass123")
-        response = self.client.get(reverse('api-endpoint'))  # Replace with your actual API endpoint
+        response = self.client.get(reverse('notification_unread_count'))
         # Should be successful now
         self.assertEqual(response.status_code, 200)

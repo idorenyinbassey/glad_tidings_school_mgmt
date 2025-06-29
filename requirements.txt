@@ -8,11 +8,23 @@ pillow  # Python Imaging Library for image processing
 sqlparse  # SQL parsing library for Django
 tzdata  # Timezone database
 
+# API and serialization
+djangorestframework  # Django REST framework for APIs
+django-filter  # Advanced filtering for Django and DRF
+django-cors-headers  # Cross-Origin Resource Sharing headers
+
 # Database adapters
 psycopg2-binary  # PostgreSQL adapter
 
 # Caching and performance
 redis  # Redis client
+
+# Security and authentication
+django-oauth-toolkit  # OAuth2 provider for Django (optional)
+
+# Monitoring and debugging (development)
+django-debug-toolbar  # Debug toolbar for development
+django-extensions  # Additional Django extensions
 
 # Testing and debugging
 pytest  # Test runner
@@ -20,6 +32,10 @@ pytest-cov  # Coverage plugin for pytest
 pytest-django  # Django integration for pytest
 coverage  # Code coverage measurement tool
 Pygments  # Syntax highlighting for test output
+
+# System monitoring
+psutil  # System and process utilities
+requests  # HTTP library for external requests
 
 # Development tools
 colorama  # Colored terminal output

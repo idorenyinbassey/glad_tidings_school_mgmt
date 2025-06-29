@@ -19,6 +19,11 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+# Custom error handlers
+handler404 = 'core.views.custom_404'
+handler500 = 'core.views.custom_500'
+handler403 = 'core.views.custom_403'
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('core.urls')),
@@ -32,7 +37,16 @@ urlpatterns = [
     path('accounting/', include('accounting.urls')),
     path('itsupport/', include('itsupport.urls')),
     path('cbt/', include('cbt.urls')),
+    
+    # Django REST Framework browsable API (development only)
+    path('api-auth/', include('rest_framework.urls')) if settings.DEBUG else path('', lambda r: None),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    
+    # Add debug toolbar URLs
+    import debug_toolbar
+    urlpatterns = [
+        path('__debug__/', include(debug_toolbar.urls)),
+    ] + urlpatterns

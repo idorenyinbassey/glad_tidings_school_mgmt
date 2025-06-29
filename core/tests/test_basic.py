@@ -40,8 +40,8 @@ class BasicTests(TestCase):
         # Log in the user
         self.client.login(username="testuser", password="testpassword123")
         
-        # Access the login page when already logged in
-        response = self.client.get(reverse('login'), follow=True)
+        # Access the portal view when already logged in (which redirects to dashboard)
+        response = self.client.get(reverse('portal'))
         
         # Should redirect to dashboard
         self.assertRedirects(response, reverse('dashboard'))

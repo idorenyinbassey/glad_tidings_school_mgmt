@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models, transaction
 from django.utils import timezone
+from django.core.exceptions import ValidationError
+from decimal import Decimal
 
 # Create your models here.
 
@@ -30,6 +32,30 @@ class TuitionFee(models.Model):
             models.Index(fields=['student', 'session', 'term']),
             models.Index(fields=['status', 'due_date']),
         ]
+
+    def clean(self):
+        """Validate the model fields"""
+        super().clean()
+        
+        # Validate amount_due
+        if self.amount_due and self.amount_due <= 0:
+            raise ValidationError("Amount due must be greater than zero")
+        
+        # Validate amount_paid
+        if self.amount_paid and self.amount_paid < 0:
+            raise ValidationError("Amount paid cannot be negative")
+        
+        # Validate that amount_paid doesn't exceed amount_due
+        if self.amount_paid and self.amount_due and self.amount_paid > self.amount_due:
+            raise ValidationError("Amount paid cannot exceed amount due")
+        
+        # Validate due_date
+        if self.due_date and self.due_date < timezone.now().date().replace(year=timezone.now().year - 1):
+            raise ValidationError("Due date cannot be more than a year in the past")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.student} - {self.session} {self.term} - {self.status}"

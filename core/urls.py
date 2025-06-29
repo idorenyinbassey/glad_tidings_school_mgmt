@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from . import views, views_notifications, views_performance, views_elibrary, views_attendance, views_profile
 
 urlpatterns = [
@@ -15,4 +15,7 @@ urlpatterns = [
     path('elibrary/', views_elibrary.elibrary, name='elibrary'),
     path('attendance/', views_attendance.attendance, name='attendance'),
     path('profile/', views_profile.profile, name='profile'),
+
+    # Include API URLs
+    path('', include('core.api_urls')),
 ]

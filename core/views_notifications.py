@@ -89,10 +89,8 @@ def mark_notification_read(request, notification_id):
         
         return redirect('notifications')
 
+@login_required
 def get_unread_count(request):
     """Return the number of unread notifications for the current user"""
-    if not request.user.is_authenticated:
-        return JsonResponse({'count': 0})
-    
     count = UserNotification.objects.filter(user=request.user, is_read=False).count()
     return JsonResponse({'count': count})

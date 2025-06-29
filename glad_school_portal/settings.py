@@ -67,6 +67,11 @@ INSTALLED_APPS = [
     # Third-party apps
     'django_redis',  # Redis cache backend
     'csp',  # Content Security Policy
+    'rest_framework',  # Django REST Framework
+    'django_filters',  # Advanced filtering
+    'corsheaders',  # CORS headers
+    'debug_toolbar' if DEBUG else None,  # Debug toolbar for development
+    'django_extensions',  # Django extensions
     # Project apps
     'core',  # Added core app
     'users',  # Added users app
@@ -79,8 +84,18 @@ INSTALLED_APPS = [
     'cbt',  # Added cbt app
 ]
 
+# Remove None values from INSTALLED_APPS
+INSTALLED_APPS = [app for app in INSTALLED_APPS if app is not None]
+
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # CORS middleware (should be first)
+    'debug_toolbar.middleware.DebugToolbarMiddleware' if DEBUG else None,  # Debug toolbar
     'django.middleware.security.SecurityMiddleware',
+    # Performance monitoring middleware
+    'core.performance.PerformanceMonitoringMiddleware',
+    'core.performance.DatabaseQueryMonitoringMiddleware',
+    'core.performance.MemoryMonitoringMiddleware',
+    'core.performance.RateLimitMiddleware',
     # Add UpdateCacheMiddleware at the beginning and FetchFromCacheMiddleware after CommonMiddleware
     'django.middleware.cache.UpdateCacheMiddleware' if not DEBUG else None,
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -92,6 +107,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # Content Security Policy
     'csp.middleware.CSPMiddleware',
+    # Custom middleware
+    'core.middleware.RequestLoggingMiddleware',
+    'core.middleware.SecurityHeadersMiddleware',
+    'core.middleware.UserActivityMiddleware',
 ]
 
 # Remove None values from MIDDLEWARE
@@ -167,12 +186,31 @@ if DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
         DATABASES['default']['OPTIONS'] = {}
     # Use connect_timeout for PostgreSQL (not timeout)
     DATABASES['default']['OPTIONS']['connect_timeout'] = 30
+    # Additional PostgreSQL optimizations
+    DATABASES['default']['OPTIONS'].update({
+        'init_command': "SET timezone='UTC'",
+        'charset': 'utf8',
+    })
+elif DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
+    # Ensure OPTIONS exists
+    if 'OPTIONS' not in DATABASES['default']:
+        DATABASES['default']['OPTIONS'] = {}
+    # MySQL optimizations
+    DATABASES['default']['OPTIONS'].update({
+        'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        'charset': 'utf8mb4',
+        'autocommit': True,
+    })
 elif DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
     # Ensure OPTIONS exists
     if 'OPTIONS' not in DATABASES['default']:
         DATABASES['default']['OPTIONS'] = {}
     # Use timeout for SQLite
     DATABASES['default']['OPTIONS']['timeout'] = 30
+    # SQLite optimizations
+    DATABASES['default']['OPTIONS'].update({
+        'init_command': "PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;",
+    })
 
 # Use persistent connections in production
 if not DEBUG:
@@ -234,6 +272,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # For production collectstatic
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',  # Global static files directory
+]
+
+# Media files (user uploads)
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -246,12 +292,23 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
             'style': '{',
         },
         'simple': {
             'format': '{levelname} {message}',
             'style': '{',
+        },
+        'json': {
+            'format': '{"level": "%(levelname)s", "time": "%(asctime)s", "module": "%(module)s", "message": "%(message)s"}',
+        },
+    },
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
         },
     },
     'handlers': {
@@ -259,25 +316,86 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
+            'filters': ['require_debug_true'],
         },
         'file': {
             'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'debug.log',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'django.log',
+            'maxBytes': 1024*1024*5,  # 5 MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'django_errors.log',
+            'maxBytes': 1024*1024*5,  # 5 MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+        'security_file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'security.log',
+            'maxBytes': 1024*1024*5,  # 5 MB
+            'backupCount': 10,
+            'formatter': 'json',
+        },
+        'request_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'requests.log',
+            'maxBytes': 1024*1024*10,  # 10 MB
+            'backupCount': 7,
             'formatter': 'verbose',
         },
     },
     'loggers': {
         'django': {
-            'handlers': ['console'],
+            'handlers': ['console', 'file'],
             'level': 'INFO',
-            'propagate': True,
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['error_file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'django.security': {
+            'handlers': ['security_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'glad_tidings.requests': {
+            'handlers': ['request_file'],
+            'level': 'INFO',
+            'propagate': False,
         },
         'core': {
             'handlers': ['console', 'file'],
             'level': 'INFO',
-            'propagate': True,
+            'propagate': False,
         },
+        'accounting': {
+            'handlers': ['file', 'error_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'students': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'staff': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'WARNING',
     },
 }
 
@@ -337,3 +455,62 @@ else:
             'connect-src': ("'self'", "http:", "https:"),
         }
     }
+
+# Django REST Framework settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer' if DEBUG else None,
+    ],
+}
+
+# Remove None values from REST_FRAMEWORK renderers
+if 'DEFAULT_RENDERER_CLASSES' in REST_FRAMEWORK:
+    REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = [
+        renderer for renderer in REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] if renderer is not None
+    ]
+
+# CORS settings (for API access)
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:3000",  # React development server
+        "http://127.0.0.1:3000",
+        # Add your production frontend URLs here
+    ]
+
+CORS_ALLOW_CREDENTIALS = True
+
+# Debug Toolbar settings (development only)
+if DEBUG:
+    INTERNAL_IPS = [
+        '127.0.0.1',
+        'localhost',
+    ]
+    
+    DEBUG_TOOLBAR_CONFIG = {
+        'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG,
+    }
+
+# Performance monitoring settings
+SLOW_REQUEST_THRESHOLD = env.float('SLOW_REQUEST_THRESHOLD', default=2.0)  # seconds
+SLOW_QUERY_THRESHOLD = env.float('SLOW_QUERY_THRESHOLD', default=0.5)  # seconds
+
+# Rate limiting settings
+RATE_LIMIT_REQUESTS = env.int('RATE_LIMIT_REQUESTS', default=100)  # requests per window
+RATE_LIMIT_WINDOW = env.int('RATE_LIMIT_WINDOW', default=60)  # seconds
