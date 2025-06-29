@@ -23,6 +23,7 @@ A comprehensive school management system built with Django, featuring role-based
 
 ## Documentation
 
+- [Docker Guide](docs/DOCKER_GUIDE.md): 🐳 Complete Docker deployment guide (Recommended)
 - [Installation Guide](docs/INSTALLATION.md): Comprehensive setup instructions
 - [User Guide](docs/user_guide.md): Complete guide for all users
 - [Developer Guide](docs/developer_guide.md): Technical documentation for developers
@@ -39,8 +40,40 @@ A comprehensive school management system built with Django, featuring role-based
 - **Authentication**: Django Authentication System with Two-Factor Auth
 - **Caching**: Redis for performance optimization
 - **Testing**: Django Test Framework, pytest
+- **Deployment**: 🐳 Docker & Docker Compose, Nginx, Gunicorn
+- **CI/CD**: GitHub Actions
 
 ## Quick Start
+
+🐳 **Docker Deployment (Recommended)**
+
+For the easiest deployment, use Docker:
+
+```bash
+# Clone repository
+git clone https://github.com/idorenyinbassey/glad_tidings_school_mgmt.git
+cd glad_tidings_school_mgmt
+
+# Interactive deployment script
+./docker_deploy.sh
+
+# Or manual deployment
+# Development mode
+docker-compose -f docker-compose.dev.yml up --build -d
+
+# Production mode (configure .env first)
+cp .env.docker .env  # Edit with your values
+docker-compose up --build -d
+```
+
+**Access Points:**
+- Development: http://localhost:8000
+- Production: http://localhost
+- Admin: http://localhost/admin
+
+See the [Docker Guide](docs/DOCKER_GUIDE.md) for detailed Docker deployment instructions.
+
+🖥️ **Traditional Installation**
 
 For detailed installation instructions, see the [Installation Guide](docs/INSTALLATION.md).
 

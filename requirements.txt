@@ -19,6 +19,9 @@ psycopg2-binary  # PostgreSQL adapter
 # Caching and performance
 redis  # Redis client
 
+# Production WSGI server
+gunicorn  # Python WSGI HTTP Server for UNIX
+
 # Security and authentication
 django-oauth-toolkit  # OAuth2 provider for Django (optional)
 
@@ -42,3 +45,6 @@ colorama  # Colored terminal output
 iniconfig  # INI file parser used by pytest
 packaging  # Utilities for package version handling
 pluggy  # Plugin management system used by pytest
+
+# Production dependencies
+whitenoise  # Static file serving for Django

@@ -18,6 +18,14 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+# Simple health check for Docker
+@csrf_exempt
+def health_check(request):
+    """Health check endpoint for Docker and load balancers"""
+    return JsonResponse({'status': 'healthy', 'service': 'glad_school_portal'})
 
 # Custom error handlers
 handler404 = 'core.views.custom_404'
@@ -25,6 +33,7 @@ handler500 = 'core.views.custom_500'
 handler403 = 'core.views.custom_403'
 
 urlpatterns = [
+    path('health/', health_check, name='health_check'),
     path('admin/', admin.site.urls),
     path('', include('core.urls')),
     # Include our custom user password URLs before the default auth URLs
