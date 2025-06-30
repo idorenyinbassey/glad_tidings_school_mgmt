@@ -19,7 +19,31 @@
                     <p class="card-text">Manage student fees, invoices, and payments.</p>
                 </div>
                 <div class="card-footer bg-transparent border-top-0">
-                    <a href="{% url 'accounting:fees' %}" class="btn btn-primary btn-sm stretched-link">Fee Management</a>
+                    <a href="{% url 'accounting:fee_list' %}" class="btn btn-primary btn-sm stretched-link">Manage Fees</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-credit-card me-2"></i> Payments</h5>
+                    <p class="card-text">Record and track student fee payments.</p>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <a href="{% url 'accounting:payment_list' %}" class="btn btn-primary btn-sm stretched-link">View Payments</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-receipt me-2"></i> Expenses</h5>
+                    <p class="card-text">Track and manage school expenses.</p>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <a href="{% url 'accounting:expense_list' %}" class="btn btn-primary btn-sm stretched-link">Manage Expenses</a>
                 </div>
             </div>
         </div>
@@ -35,7 +59,9 @@
                 </div>
             </div>
         </div>
+    </div>
 
+    <div class="row">
         <div class="col-lg-3 col-md-6 mb-4">
             <div class="card h-100 shadow-sm">
                 <div class="card-body">
@@ -43,7 +69,22 @@
                     <p class="card-text">Manage staff payroll and salary information.</p>
                 </div>
                 <div class="card-footer bg-transparent border-top-0">
-                    <a href="#" class="btn btn-primary btn-sm stretched-link">Payroll System</a>
+                    <a href="{% url 'accounting:payroll_list' %}" class="btn btn-primary btn-sm stretched-link">Payroll System</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-plus-circle me-2"></i> Quick Actions</h5>
+                    <p class="card-text">Quickly create fees and record payments.</p>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <div class="btn-group w-100" role="group">
+                        <a href="{% url 'accounting:fee_create' %}" class="btn btn-success btn-sm">New Fee</a>
+                        <a href="{% url 'accounting:payment_create' %}" class="btn btn-info btn-sm">New Payment</a>
+                    </div>
                 </div>
             </div>
         </div>

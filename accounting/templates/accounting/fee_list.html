@@ -1,0 +1,175 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Fee Management - Accounting{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Fee Management</h2>
+        <a href="{% url 'accounting:fee_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Create New Fee
+        </a>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Due</h5>
+                    <h3>₦{{ fee_stats.total_due|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Paid</h5>
+                    <h3>₦{{ fee_stats.total_paid|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Outstanding</h5>
+                    <h3>₦{{ fee_stats.outstanding|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Collection Rate</h5>
+                    <h3>{{ fee_stats.collection_percentage|floatformat:1 }}%</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <input type="text" class="form-control" name="search" placeholder="Search student..." value="{{ search }}">
+                </div>
+                <div class="col-md-2">
+                    <select name="status" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="unpaid" {% if status_filter == 'unpaid' %}selected{% endif %}>Unpaid</option>
+                        <option value="partial" {% if status_filter == 'partial' %}selected{% endif %}>Partial</option>
+                        <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="session" class="form-select">
+                        <option value="">All Sessions</option>
+                        {% for session in sessions %}
+                        <option value="{{ session }}" {% if session_filter == session %}selected{% endif %}>{{ session }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="term" class="form-select">
+                        <option value="">All Terms</option>
+                        {% for term in terms %}
+                        <option value="{{ term }}" {% if term_filter == term %}selected{% endif %}>{{ term }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-outline-primary">Filter</button>
+                    <a href="{% url 'accounting:fee_list' %}" class="btn btn-outline-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Fee List -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Session/Term</th>
+                            <th>Amount Due</th>
+                            <th>Amount Paid</th>
+                            <th>Outstanding</th>
+                            <th>Status</th>
+                            <th>Due Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fee in page_obj %}
+                        <tr>
+                            <td>
+                                <strong>{{ fee.student.user.get_full_name }}</strong><br>
+                                <small class="text-muted">{{ fee.student.admission_number }}</small>
+                            </td>
+                            <td>{{ fee.session }} {{ fee.term }}</td>
+                            <td>₦{{ fee.amount_due|floatformat:2 }}</td>
+                            <td>₦{{ fee.amount_paid|floatformat:2 }}</td>
+                            <td>₦{{ fee.amount_outstanding|floatformat:2 }}</td>
+                            <td>
+                                {% if fee.status == 'paid' %}
+                                    <span class="badge bg-success">Paid</span>
+                                {% elif fee.status == 'partial' %}
+                                    <span class="badge bg-warning">Partial</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Unpaid</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ fee.due_date|date:"M d, Y" }}</td>
+                            <td>
+                                <a href="{% url 'accounting:fee_detail' fee.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                                {% if fee.status != 'paid' %}
+                                <a href="{% url 'accounting:payment_create_for_fee' fee.pk %}" class="btn btn-sm btn-success">Pay</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted">No fees found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Fee pagination">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if session_filter %}&session={{ session_filter }}{% endif %}{% if term_filter %}&term={{ term_filter }}{% endif %}">First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if session_filter %}&session={{ session_filter }}{% endif %}{% if term_filter %}&term={{ term_filter }}{% endif %}">Previous</a>
+                        </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if session_filter %}&session={{ session_filter }}{% endif %}{% if term_filter %}&term={{ term_filter }}{% endif %}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if session_filter %}&session={{ session_filter }}{% endif %}{% if term_filter %}&term={{ term_filter }}{% endif %}">Last</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

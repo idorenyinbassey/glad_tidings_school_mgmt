@@ -1,9 +1,14 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.http import HttpResponse
-from django.db.models import Sum, Count
+from django.http import HttpResponse, JsonResponse
+from django.db.models import Sum, Count, Q
 from django.utils import timezone
+from django.contrib import messages
+from django.core.paginator import Paginator
 from core.decorators import staff_required, accountant_required
+from .models import TuitionFee, Payment, Expense, Payroll
+from .forms import TuitionFeeForm, PaymentForm, ExpenseForm, PayrollForm
+from students.models import StudentProfile
 
 @login_required
 @staff_required
@@ -179,3 +184,340 @@ def reports(request):
     }
     
     return render(request, 'accounting/reports.html', context)
+
+# =================== TUITION FEE MANAGEMENT ===================
+
+@login_required
+@staff_required
+def fee_list(request):
+    """List all tuition fees with filtering and pagination"""
+    fees = TuitionFee.objects.select_related('student__user').order_by('-created_at')
+    
+    # Search and filtering
+    search = request.GET.get('search')
+    status_filter = request.GET.get('status')
+    session_filter = request.GET.get('session')
+    term_filter = request.GET.get('term')
+    
+    if search:
+        fees = fees.filter(
+            Q(student__user__first_name__icontains=search) |
+            Q(student__user__last_name__icontains=search) |
+            Q(student__admission_number__icontains=search)
+        )
+    
+    if status_filter:
+        fees = fees.filter(status=status_filter)
+    
+    if session_filter:
+        fees = fees.filter(session=session_filter)
+        
+    if term_filter:
+        fees = fees.filter(term=term_filter)
+    
+    # Pagination
+    paginator = Paginator(fees, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Get unique sessions and terms for filters
+    sessions = TuitionFee.objects.values_list('session', flat=True).distinct()
+    terms = TuitionFee.objects.values_list('term', flat=True).distinct()
+    
+    context = {
+        'page_obj': page_obj,
+        'search': search,
+        'status_filter': status_filter,
+        'session_filter': session_filter,
+        'term_filter': term_filter,
+        'sessions': sessions,
+        'terms': terms,
+        'fee_stats': TuitionFee.get_fee_statistics(),
+    }
+    
+    return render(request, 'accounting/fee_list.html', context)
+
+@login_required
+@staff_required
+def fee_create(request):
+    """Create a new tuition fee"""
+    if request.method == 'POST':
+        form = TuitionFeeForm(request.POST)
+        if form.is_valid():
+            fee = form.save(commit=False)
+            fee.created_by = request.user
+            fee.save()
+            messages.success(request, f'Tuition fee created for {fee.student}')
+            return redirect('accounting:fee_detail', pk=fee.pk)
+    else:
+        form = TuitionFeeForm()
+    
+    return render(request, 'accounting/fee_form.html', {
+        'form': form,
+        'title': 'Create Tuition Fee'
+    })
+
+@login_required
+@staff_required
+def fee_detail(request, pk):
+    """View detailed tuition fee information"""
+    fee = get_object_or_404(TuitionFee, pk=pk)
+    payments = fee.payments.all().order_by('-payment_date')
+    
+    context = {
+        'fee': fee,
+        'payments': payments,
+        'payment_form': PaymentForm() if request.user.has_perm('accounting.add_payment') else None,
+    }
+    
+    return render(request, 'accounting/fee_detail.html', context)
+
+@login_required
+@staff_required
+def fee_edit(request, pk):
+    """Edit existing tuition fee"""
+    fee = get_object_or_404(TuitionFee, pk=pk)
+    
+    if request.method == 'POST':
+        form = TuitionFeeForm(request.POST, instance=fee)
+        if form.is_valid():
+            fee = form.save(commit=False)
+            fee.updated_by = request.user
+            fee.save()
+            messages.success(request, f'Tuition fee updated for {fee.student}')
+            return redirect('accounting:fee_detail', pk=fee.pk)
+    else:
+        form = TuitionFeeForm(instance=fee)
+    
+    return render(request, 'accounting/fee_form.html', {
+        'form': form,
+        'fee': fee,
+        'title': 'Edit Tuition Fee'
+    })
+
+# =================== PAYMENT MANAGEMENT ===================
+
+@login_required
+@staff_required
+def payment_create(request, fee_pk=None):
+    """Create a new payment"""
+    fee = None
+    if fee_pk:
+        fee = get_object_or_404(TuitionFee, pk=fee_pk)
+    
+    if request.method == 'POST':
+        form = PaymentForm(request.POST)
+        if form.is_valid():
+            payment = form.save(commit=False)
+            payment.created_by = request.user
+            try:
+                payment.save()
+                messages.success(request, f'Payment of ₦{payment.amount:,.2f} recorded successfully')
+                return redirect('accounting:fee_detail', pk=payment.tuition_fee.pk)
+            except ValueError as e:
+                messages.error(request, str(e))
+    else:
+        initial = {'tuition_fee': fee} if fee else {}
+        form = PaymentForm(initial=initial)
+    
+    return render(request, 'accounting/payment_form.html', {
+        'form': form,
+        'fee': fee,
+        'title': 'Record Payment'
+    })
+
+@login_required
+@staff_required
+def payment_list(request):
+    """List all payments with filtering"""
+    payments = Payment.objects.select_related('tuition_fee__student__user').order_by('-payment_date')
+    
+    # Filtering
+    method_filter = request.GET.get('method')
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    search = request.GET.get('search')
+    
+    if method_filter:
+        payments = payments.filter(method=method_filter)
+    
+    if date_from:
+        payments = payments.filter(payment_date__gte=date_from)
+    
+    if date_to:
+        payments = payments.filter(payment_date__lte=date_to)
+    
+    if search:
+        payments = payments.filter(
+            Q(tuition_fee__student__user__first_name__icontains=search) |
+            Q(tuition_fee__student__user__last_name__icontains=search) |
+            Q(receipt_number__icontains=search) |
+            Q(reference__icontains=search)
+        )
+    
+    # Pagination
+    paginator = Paginator(payments, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Summary statistics
+    total_amount = payments.aggregate(total=Sum('amount'))['total'] or 0
+    payment_methods = Payment.objects.values('method').annotate(
+        total=Sum('amount'),
+        count=Count('id')
+    ).order_by('-total')
+    
+    context = {
+        'page_obj': page_obj,
+        'total_amount': total_amount,
+        'payment_methods': payment_methods,
+        'method_filter': method_filter,
+        'date_from': date_from,
+        'date_to': date_to,
+        'search': search,
+    }
+    
+    return render(request, 'accounting/payment_list.html', context)
+
+# =================== EXPENSE MANAGEMENT ===================
+
+@login_required
+@staff_required
+def expense_list(request):
+    """List all expenses with filtering"""
+    expenses = Expense.objects.order_by('-date')
+    
+    # Filtering
+    category_filter = request.GET.get('category')
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    search = request.GET.get('search')
+    
+    if category_filter:
+        expenses = expenses.filter(category=category_filter)
+    
+    if date_from:
+        expenses = expenses.filter(date__gte=date_from)
+    
+    if date_to:
+        expenses = expenses.filter(date__lte=date_to)
+    
+    if search:
+        expenses = expenses.filter(description__icontains=search)
+    
+    # Pagination
+    paginator = Paginator(expenses, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Summary
+    total_expenses = expenses.aggregate(total=Sum('amount'))['total'] or 0
+    category_totals = expenses.values('category').annotate(
+        total=Sum('amount'),
+        count=Count('id')
+    ).order_by('-total')
+    
+    context = {
+        'page_obj': page_obj,
+        'total_expenses': total_expenses,
+        'category_totals': category_totals,
+        'category_filter': category_filter,
+        'date_from': date_from,
+        'date_to': date_to,
+        'search': search,
+        'categories': Expense.EXPENSE_CATEGORIES,
+    }
+    
+    return render(request, 'accounting/expense_list.html', context)
+
+@login_required
+@staff_required
+def expense_create(request):
+    """Create a new expense"""
+    if request.method == 'POST':
+        form = ExpenseForm(request.POST)
+        if form.is_valid():
+            expense = form.save(commit=False)
+            expense.created_by = request.user
+            expense.save()
+            messages.success(request, f'Expense of ₦{expense.amount:,.2f} recorded')
+            return redirect('accounting:expense_list')
+    else:
+        form = ExpenseForm()
+    
+    return render(request, 'accounting/expense_form.html', {
+        'form': form,
+        'title': 'Record Expense'
+    })
+
+# =================== PAYROLL MANAGEMENT ===================
+
+@login_required
+@staff_required
+def payroll_list(request):
+    """List payroll records with filtering"""
+    payrolls = Payroll.objects.select_related('staff__user').order_by('-year', '-month')
+    
+    # Filtering
+    year_filter = request.GET.get('year')
+    month_filter = request.GET.get('month')
+    paid_filter = request.GET.get('paid')
+    
+    if year_filter:
+        payrolls = payrolls.filter(year=year_filter)
+    
+    if month_filter:
+        payrolls = payrolls.filter(month=month_filter)
+    
+    if paid_filter:
+        paid_status = paid_filter.lower() == 'true'
+        payrolls = payrolls.filter(paid=paid_status)
+    
+    # Pagination
+    paginator = Paginator(payrolls, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Summary
+    total_payroll = payrolls.aggregate(total=Sum('amount'))['total'] or 0
+    paid_payroll = payrolls.filter(paid=True).aggregate(total=Sum('amount'))['total'] or 0
+    unpaid_payroll = payrolls.filter(paid=False).aggregate(total=Sum('amount'))['total'] or 0
+    
+    context = {
+        'page_obj': page_obj,
+        'total_payroll': total_payroll,
+        'paid_payroll': paid_payroll,
+        'unpaid_payroll': unpaid_payroll,
+        'year_filter': year_filter,
+        'month_filter': month_filter,
+        'paid_filter': paid_filter,
+    }
+    
+    return render(request, 'accounting/payroll_list.html', context)
+
+# =================== AJAX ENDPOINTS ===================
+
+@login_required
+@staff_required
+def student_search_ajax(request):
+    """AJAX endpoint for student search"""
+    query = request.GET.get('q', '')
+    students = StudentProfile.objects.filter(
+        Q(user__first_name__icontains=query) |
+        Q(user__last_name__icontains=query) |
+        Q(admission_number__icontains=query)
+    ).select_related('user')[:10]
+    
+    results = [{
+        'id': student.id,
+        'text': f"{student.user.get_full_name()} ({student.admission_number})"
+    } for student in students]
+    
+    return JsonResponse({'results': results})
+
+@login_required
+@staff_required
+def fee_statistics_ajax(request):
+    """AJAX endpoint for fee statistics"""
+    stats = TuitionFee.get_fee_statistics()
+    return JsonResponse(stats)

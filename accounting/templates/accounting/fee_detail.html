@@ -1,0 +1,184 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Fee Detail - Accounting{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Fee Information -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Fee Information</h5>
+                    <div>
+                        <a href="{% url 'accounting:fee_edit' fee.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                        {% if fee.status != 'paid' %}
+                        <a href="{% url 'accounting:payment_create_for_fee' fee.pk %}" class="btn btn-sm btn-success">Add Payment</a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Student:</strong> {{ fee.student.user.get_full_name }}</p>
+                            <p><strong>Admission Number:</strong> {{ fee.student.admission_number }}</p>
+                            <p><strong>Session:</strong> {{ fee.session }}</p>
+                            <p><strong>Term:</strong> {{ fee.term }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Amount Due:</strong> ₦{{ fee.amount_due|floatformat:2 }}</p>
+                            <p><strong>Amount Paid:</strong> ₦{{ fee.amount_paid|floatformat:2 }}</p>
+                            <p><strong>Outstanding:</strong> ₦{{ fee.amount_outstanding|floatformat:2 }}</p>
+                            <p><strong>Due Date:</strong> {{ fee.due_date|date:"M d, Y" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <p>
+                                <strong>Status:</strong> 
+                                {% if fee.status == 'paid' %}
+                                    <span class="badge bg-success">Paid</span>
+                                {% elif fee.status == 'partial' %}
+                                    <span class="badge bg-warning">Partial Payment</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Unpaid</span>
+                                {% endif %}
+                            </p>
+                            
+                            {% if fee.paid_date %}
+                            <p><strong>Paid Date:</strong> {{ fee.paid_date|date:"M d, Y" }}</p>
+                            {% endif %}
+                            
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: {{ fee.payment_percentage }}%" 
+                                     aria-valuenow="{{ fee.payment_percentage }}" 
+                                     aria-valuemin="0" aria-valuemax="100">
+                                    {{ fee.payment_percentage|floatformat:1 }}%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Payment History -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Payment History</h5>
+                </div>
+                <div class="card-body">
+                    {% if payments %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                    <th>Receipt #</th>
+                                    <th>Reference</th>
+                                    <th>Recorded By</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in payments %}
+                                <tr>
+                                    <td>{{ payment.payment_date|date:"M d, Y" }}</td>
+                                    <td>₦{{ payment.amount|floatformat:2 }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ payment.get_method_display }}</span>
+                                    </td>
+                                    <td>{{ payment.receipt_number|default:"-" }}</td>
+                                    <td>{{ payment.reference|default:"-" }}</td>
+                                    <td>{{ payment.created_by.get_full_name|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No payments recorded yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Quick Payment Form -->
+            {% if payment_form and fee.status != 'paid' %}
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Quick Payment</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'accounting:payment_create_for_fee' fee.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="tuition_fee" value="{{ fee.pk }}">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Amount</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" class="form-control" name="amount" 
+                                       step="0.01" min="0" max="{{ fee.amount_outstanding }}" 
+                                       placeholder="0.00" required>
+                            </div>
+                            <small class="text-muted">Max: ₦{{ fee.amount_outstanding|floatformat:2 }}</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Payment Method</label>
+                            <select class="form-select" name="method" required>
+                                <option value="">Select method</option>
+                                <option value="cash">Cash</option>
+                                <option value="bank">Bank Transfer</option>
+                                <option value="card">Card</option>
+                                <option value="online">Online Payment</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Payment Date</label>
+                            <input type="date" class="form-control" name="payment_date" 
+                                   value="{% now 'Y-m-d' %}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Receipt Number</label>
+                            <input type="text" class="form-control" name="receipt_number" placeholder="Optional">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success w-100">Record Payment</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Fee Summary -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Summary</h6>
+                </div>
+                <div class="card-body">
+                    <p class="d-flex justify-content-between">
+                        <span>Total Due:</span>
+                        <strong>₦{{ fee.amount_due|floatformat:2 }}</strong>
+                    </p>
+                    <p class="d-flex justify-content-between">
+                        <span>Total Paid:</span>
+                        <strong class="text-success">₦{{ fee.amount_paid|floatformat:2 }}</strong>
+                    </p>
+                    <hr>
+                    <p class="d-flex justify-content-between">
+                        <span>Outstanding:</span>
+                        <strong class="text-danger">₦{{ fee.amount_outstanding|floatformat:2 }}</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
