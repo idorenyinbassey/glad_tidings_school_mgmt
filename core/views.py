@@ -35,6 +35,8 @@ def dashboard(request):
         return render(request, 'core/dashboard_staff.html')
     elif role == 'admin':
         return render(request, 'core/dashboard_admin.html')
+    elif role == 'accountant':
+        return redirect('accounting:home')  # Redirect accountants to the finance dashboard
     elif role == 'it_support':
         return render(request, 'core/dashboard_it.html')
     else:

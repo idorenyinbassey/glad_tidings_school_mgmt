@@ -5,7 +5,7 @@ app_name = 'accounting'
 
 urlpatterns = [
     # Main pages
-    path('', views.accounting_home, name='accounting_home'),
+    path('', views.accounting_home, name='home'),
     path('fees/', views.fees, name='fees'),
     path('reports/', views.reports, name='reports'),
     

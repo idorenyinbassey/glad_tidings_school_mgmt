@@ -13,8 +13,157 @@ from students.models import StudentProfile
 @login_required
 @staff_required
 def accounting_home(request):
-    print(f"User accessing accounting: {request.user.username}, role: {request.user.role}")
-    return render(request, 'accounting/accounting_home.html')
+    """
+    Professional Finance Dashboard for Accountants with real-time financial metrics
+    """
+    from datetime import datetime, timedelta
+    from django.db.models import Sum, Q, Count, Avg
+    from decimal import Decimal
+    import json
+    
+    # Date ranges for analysis
+    today = timezone.now().date()
+    current_month_start = today.replace(day=1)
+    last_month_start = (current_month_start - timedelta(days=1)).replace(day=1)
+    current_year_start = today.replace(month=1, day=1)
+    
+    # Financial Metrics
+    total_revenue = Payment.objects.filter(
+        payment_date__year=today.year
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    total_expenses = Expense.objects.filter(
+        date__year=today.year
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    # Calculate outstanding fees (amount_due - amount_paid for unpaid/partial fees)
+    from django.db.models import F
+    outstanding_fees_data = TuitionFee.objects.filter(
+        status__in=['unpaid', 'partial']
+    ).aggregate(
+        total_due=Sum('amount_due'),
+        total_paid=Sum('amount_paid')
+    )
+    
+    total_due = outstanding_fees_data['total_due'] or Decimal('0')
+    total_paid = outstanding_fees_data['total_paid'] or Decimal('0')
+    outstanding_fees = max(Decimal('0'), total_due - total_paid)
+    
+    # Collection Rate Calculation
+    total_fees_due = TuitionFee.objects.aggregate(total=Sum('amount_due'))['total'] or Decimal('0')
+    total_collected = Payment.objects.aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    collection_rate = (total_collected / total_fees_due * 100) if total_fees_due > 0 else 0
+    
+    # Monthly Comparisons
+    current_month_revenue = Payment.objects.filter(
+        payment_date__gte=current_month_start
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    last_month_revenue = Payment.objects.filter(
+        payment_date__gte=last_month_start,
+        payment_date__lt=current_month_start
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    revenue_growth = ((current_month_revenue - last_month_revenue) / last_month_revenue * 100) if last_month_revenue > 0 else 0
+    
+    # Payment method breakdown
+    payment_methods = Payment.objects.values('method').annotate(
+        total=Sum('amount'), count=Count('id')
+    ).order_by('-total')
+    
+    # Recent payments (last 5)
+    recent_payments = Payment.objects.select_related('tuition_fee__student__user').order_by('-payment_date')[:5]
+    
+    # Pending actions
+    overdue_fees = TuitionFee.objects.filter(
+        status__in=['unpaid', 'partial'],
+        due_date__lt=today
+    ).count()
+    
+    unverified_payments = 0  # No status field in Payment model
+    
+    # Financial trends for charts (last 6 months)
+    monthly_data = []
+    for i in range(6):
+        month_start = (current_month_start - timedelta(days=32*i)).replace(day=1)
+        month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        
+        month_revenue = Payment.objects.filter(
+            payment_date__gte=month_start,
+            payment_date__lte=month_end
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+        
+        month_expenses = Expense.objects.filter(
+            date__gte=month_start,
+            date__lte=month_end
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+        
+        monthly_data.append({
+            'month': month_start.strftime('%b %Y'),
+            'revenue': float(month_revenue),
+            'expenses': float(month_expenses)
+        })
+    
+    monthly_data.reverse()  # Show chronologically
+    
+    # Quick stats for today, week, month
+    today_payments = Payment.objects.filter(
+        payment_date=today
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    week_start = today - timedelta(days=today.weekday())
+    week_payments = Payment.objects.filter(
+        payment_date__gte=week_start
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    month_payments = Payment.objects.filter(
+        payment_date__gte=current_month_start
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    # Recent fee transactions for table
+    recent_fees = TuitionFee.objects.select_related('student__user').order_by('-created_at')[:10]
+    
+    # Convert payment methods to JSON-safe format
+    payment_methods_data = []
+    for method in payment_methods:
+        payment_methods_data.append({
+            'payment_method': method['method'] or 'Unknown',
+            'total': float(method['total'] or 0),
+            'count': method['count']
+        })
+    
+    context = {
+        # Financial Metrics
+        'total_revenue': total_revenue,
+        'total_expenses': total_expenses,
+        'outstanding_fees': outstanding_fees,
+        'collection_rate': round(collection_rate, 1),
+        'net_income': total_revenue - total_expenses,
+        
+        # Growth & Trends
+        'revenue_growth': round(revenue_growth, 1),
+        'monthly_data': json.dumps(monthly_data),
+        'payment_methods': payment_methods_data,
+        
+        # Quick Stats
+        'today_payments': today_payments,
+        'week_payments': week_payments,
+        'month_payments': month_payments,
+        
+        # Recent Activity
+        'recent_payments': recent_payments,
+        'recent_fees': recent_fees,
+        
+        # Pending Actions
+        'overdue_fees': overdue_fees,
+        'unverified_payments': unverified_payments,
+        
+        # Additional metrics
+        'total_students_with_fees': TuitionFee.objects.values('student').distinct().count(),
+        'average_fee_amount': TuitionFee.objects.aggregate(avg=Avg('amount_due'))['avg'] or Decimal('0'),
+    }
+    
+    return render(request, 'accounting/accounting_home.html', context)
 
 @login_required
 @staff_required

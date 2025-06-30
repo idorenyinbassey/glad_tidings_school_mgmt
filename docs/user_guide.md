@@ -78,6 +78,7 @@ To change a user's role:
    - `student`: For students
    - `staff`: For teachers and school staff
    - `admin`: For school administrators
+   - `accountant`: For finance and accounting personnel
    - `it_support`: For technical support personnel
 5. Click "Save"
 
@@ -146,6 +147,23 @@ Administrators have access to:
 - Report generation
 - System configuration
 - All features available to staff
+
+### Accountant Features
+
+Accountants have access to:
+- Professional finance dashboard with real-time financial metrics
+- Comprehensive fee management (create, edit, track student fees)
+- Payment processing and recording
+- Expense management and tracking
+- Payroll management for staff
+- Financial reporting and analytics
+- Interactive charts and financial trends
+- Quick actions for common financial tasks
+- Student payment history and status tracking
+
+**Note**: Accountants are automatically redirected to the specialized finance dashboard (`/accounting/`) upon login, providing a professional finance-focused interface rather than the general staff dashboard.
+
+For detailed information about accounting features, see the [Accounting & Finance User Guide](accounting_finance_guide.md).
 
 ### IT Support Features
 

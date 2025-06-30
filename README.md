@@ -6,15 +6,22 @@ A comprehensive school management system built with Django, featuring role-based
 
 ## Features
 
-- **Role-Based Access Control**: Separate dashboards and permissions for students, staff, administrators, and IT support
+- **Role-Based Access Control**: Separate dashboards and permissions for students, staff, administrators, accountants, and IT support
 - **Academic Management**: Course materials, timetables, assignments, and grades
 - **Student Management**: Profiles, attendance, performance tracking
 - **Staff Management**: Profiles, attendance, teaching assignments
-- **Financial Management**: Fee tracking, payments, financial reports
+- **Professional Finance Module**: 
+  - Comprehensive fee management and tracking
+  - Payment processing and recording
+  - Expense management and payroll
+  - Real-time financial metrics and analytics
+  - Interactive charts and financial trends
+  - Professional accountant dashboard
 - **Notification System**: School-wide announcements and personalized notifications
 - **E-Library**: Digital resources for students and staff
 - **Computer-Based Testing (CBT)**: Online assessment platform
 - **Mobile-First Design**: Fully responsive interface for all devices
+- **Production-Ready**: Clean code, zero linting errors, optimized performance
 
 ## Screenshots
 
@@ -26,6 +33,7 @@ A comprehensive school management system built with Django, featuring role-based
 - [Docker Guide](docs/DOCKER_GUIDE.md): 🐳 Complete Docker deployment guide (Recommended)
 - [Installation Guide](docs/INSTALLATION.md): Comprehensive setup instructions
 - [User Guide](docs/user_guide.md): Complete guide for all users
+- [Accounting & Finance Guide](docs/accounting_finance_guide.md): 💰 Comprehensive finance module documentation
 - [Developer Guide](docs/developer_guide.md): Technical documentation for developers
 - [Adding Users Guide](docs/adding_users_guide.md): Quick reference for user management
 - [Security & Performance](docs/security_performance.md): Security features and optimizations

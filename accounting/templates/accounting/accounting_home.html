@@ -1,181 +1,623 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Accounting & Finance - Glad Tidings School Portal{% endblock %}
+{% block title %}Finance Dashboard - Glad Tidings School{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+:root {
+    --primary-blue: #1e3a8a;
+    --success-green: #059669;
+    --warning-amber: #d97706;
+    --danger-red: #dc2626;
+    --purple-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --green-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --red-gradient: linear-gradient(135deg, #ff6b6b 0%, #ffa726 100%);
+    --blue-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.finance-dashboard {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+}
+
+.metric-card {
+    border: none;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+    position: relative;
+}
+
+.metric-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.metric-card.revenue {
+    background: var(--green-gradient);
+    color: white;
+}
+
+.metric-card.expenses {
+    background: var(--red-gradient);
+    color: white;
+}
+
+.metric-card.outstanding {
+    background: var(--blue-gradient);
+    color: white;
+}
+
+.metric-card.collection {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.metric-icon {
+    font-size: 3.5rem;
+    opacity: 0.8;
+    position: absolute;
+    right: 20px;
+    top: 20px;
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metric-change {
+    font-size: 0.8rem;
+    opacity: 0.9;
+    margin-top: 0.5rem;
+}
+
+.chart-card {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.chart-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+}
+
+.action-card {
+    border: none;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    background: white;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.quick-action-btn {
+    border-radius: 12px;
+    border: 2px solid transparent;
+    padding: 12px 20px;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.quick-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.quick-stat-item {
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 12px;
+    border-left: 4px solid var(--primary-blue);
+    transition: all 0.3s ease;
+}
+
+.quick-stat-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.alert-modern {
+    border: none;
+    border-radius: 12px;
+    border-left: 4px solid;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+}
+
+.alert-modern.alert-danger {
+    background: rgba(220, 38, 38, 0.1);
+    border-left-color: #dc2626;
+    color: #7f1d1d;
+}
+
+.alert-modern.alert-warning {
+    background: rgba(217, 119, 6, 0.1);
+    border-left-color: #d97706;
+    color: #92400e;
+}
+
+.alert-modern.alert-info {
+    background: rgba(59, 130, 246, 0.1);
+    border-left-color: #3b82f6;
+    color: #1e3a8a;
+}
+
+.payment-item {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--success-green);
+}
+
+.payment-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.student-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: white;
+    margin-right: 15px;
+}
+
+.table-modern {
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.table-modern thead th {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);
+    color: white;
+    border: none;
+    padding: 20px 15px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.85rem;
+}
+
+.table-modern tbody td {
+    padding: 20px 15px;
+    border-top: 1px solid #e5e7eb;
+    vertical-align: middle;
+}
+
+.status-badge {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.header-section {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.dashboard-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+    margin-bottom: 10px;
+}
+
+.dashboard-subtitle {
+    color: #64748b;
+    font-size: 1.1rem;
+    margin-bottom: 0;
+}
+
+.refresh-btn {
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.refresh-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+@media (max-width: 768px) {
+    .metric-card {
+        margin-bottom: 20px;
+    }
+    
+    .metric-icon {
+        font-size: 2.5rem;
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+    }
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="row">
-        <div class="col-12 mb-4">
-            <h2 class="border-bottom pb-2">Accounting & Finance</h2>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="fas fa-file-invoice-dollar me-2"></i> Fee Management</h5>
-                    <p class="card-text">Manage student fees, invoices, and payments.</p>
+<div class="finance-dashboard">
+    <div class="container-fluid py-4">
+        <!-- Professional Header -->
+        <div class="header-section">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="dashboard-title">
+                        <i class="fas fa-chart-line me-3"></i>Finance Dashboard
+                    </h1>
+                    <p class="dashboard-subtitle">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        Welcome back, {{ user.get_full_name }}. Today is {% now "l, F j, Y" %}
+                    </p>
                 </div>
-                <div class="card-footer bg-transparent border-top-0">
-                    <a href="{% url 'accounting:fee_list' %}" class="btn btn-primary btn-sm stretched-link">Manage Fees</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="fas fa-credit-card me-2"></i> Payments</h5>
-                    <p class="card-text">Record and track student fee payments.</p>
-                </div>
-                <div class="card-footer bg-transparent border-top-0">
-                    <a href="{% url 'accounting:payment_list' %}" class="btn btn-primary btn-sm stretched-link">View Payments</a>
+                <div class="col-lg-4 text-lg-end">
+                    <button class="btn btn-outline-primary refresh-btn me-2" onclick="refreshDashboard()">
+                        <i class="fas fa-sync-alt me-2"></i>Refresh Data
+                    </button>
+                    <a href="{% url 'accounting:reports' %}" class="btn btn-primary refresh-btn">
+                        <i class="fas fa-file-chart-line me-2"></i>Generate Report
+                    </a>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="fas fa-receipt me-2"></i> Expenses</h5>
-                    <p class="card-text">Track and manage school expenses.</p>
-                </div>
-                <div class="card-footer bg-transparent border-top-0">
-                    <a href="{% url 'accounting:expense_list' %}" class="btn btn-primary btn-sm stretched-link">Manage Expenses</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="fas fa-chart-pie me-2"></i> Financial Reports</h5>
-                    <p class="card-text">View and generate financial reports and statements.</p>
-                </div>
-                <div class="card-footer bg-transparent border-top-0">
-                    <a href="{% url 'accounting:reports' %}" class="btn btn-primary btn-sm stretched-link">View Reports</a>
+        <!-- Key Financial Metrics -->
+        <div class="row mb-4">
+            <div class="col-xl-3 col-lg-6 mb-4">
+                <div class="card metric-card revenue h-100">
+                    <div class="card-body position-relative">
+                        <div class="metric-icon">
+                            <i class="fas fa-money-bill-trend-up"></i>
+                        </div>
+                        <div class="metric-label">Total Revenue (YTD)</div>
+                        <div class="metric-value">₦{{ total_revenue|floatformat:0 }}</div>
+                        <div class="metric-change">
+                            <i class="fas fa-arrow-up me-1"></i>
+                            {{ revenue_growth|floatformat:1 }}% from last month
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="fas fa-money-bill-wave me-2"></i> Payroll</h5>
-                    <p class="card-text">Manage staff payroll and salary information.</p>
-                </div>
-                <div class="card-footer bg-transparent border-top-0">
-                    <a href="{% url 'accounting:payroll_list' %}" class="btn btn-primary btn-sm stretched-link">Payroll System</a>
+            
+            <div class="col-xl-3 col-lg-6 mb-4">
+                <div class="card metric-card expenses h-100">
+                    <div class="card-body position-relative">
+                        <div class="metric-icon">
+                            <i class="fas fa-receipt"></i>
+                        </div>
+                        <div class="metric-label">Total Expenses (YTD)</div>
+                        <div class="metric-value">₦{{ total_expenses|floatformat:0 }}</div>
+                        <div class="metric-change">
+                            Net Income: ₦{{ net_income|floatformat:0 }}
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="fas fa-plus-circle me-2"></i> Quick Actions</h5>
-                    <p class="card-text">Quickly create fees and record payments.</p>
+            
+            <div class="col-xl-3 col-lg-6 mb-4">
+                <div class="card metric-card outstanding h-100">
+                    <div class="card-body position-relative">
+                        <div class="metric-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="metric-label">Outstanding Fees</div>
+                        <div class="metric-value">₦{{ outstanding_fees|floatformat:0 }}</div>
+                        <div class="metric-change">
+                            {{ overdue_fees }} overdue fees
+                        </div>
+                    </div>
                 </div>
-                <div class="card-footer bg-transparent border-top-0">
-                    <div class="btn-group w-100" role="group">
-                        <a href="{% url 'accounting:fee_create' %}" class="btn btn-success btn-sm">New Fee</a>
-                        <a href="{% url 'accounting:payment_create' %}" class="btn btn-info btn-sm">New Payment</a>
+            </div>
+            
+            <div class="col-xl-3 col-lg-6 mb-4">
+                <div class="card metric-card collection h-100">
+                    <div class="card-body position-relative">
+                        <div class="metric-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="metric-label">Collection Rate</div>
+                        <div class="metric-value">{{ collection_rate }}%</div>
+                        <div class="metric-change">
+                            Target: 95% collection rate
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="fas fa-hand-holding-usd me-2"></i> Scholarships</h5>
-                    <p class="card-text">Manage student scholarships and financial aid.</p>
-                </div>
-                <div class="card-footer bg-transparent border-top-0">
-                    <a href="#" class="btn btn-primary btn-sm stretched-link">Scholarship Portal</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mt-4">
-        <div class="col-lg-6 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Recent Transactions</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Description</th>
-                                    <th>Type</th>
-                                    <th>Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>2025-06-15</td>
-                                    <td>Term 3 Fee Payment</td>
-                                    <td><span class="badge bg-success">Income</span></td>
-                                    <td>₦250,000</td>
-                                </tr>
-                                <tr>
-                                    <td>2025-06-10</td>
-                                    <td>Staff Salary</td>
-                                    <td><span class="badge bg-danger">Expense</span></td>
-                                    <td>₦375,000</td>
-                                </tr>
-                                <tr>
-                                    <td>2025-06-05</td>
-                                    <td>Building Maintenance</td>
-                                    <td><span class="badge bg-danger">Expense</span></td>
-                                    <td>₦95,000</td>
-                                </tr>
-                                <tr>
-                                    <td>2025-06-01</td>
-                                    <td>Book Sales</td>
-                                    <td><span class="badge bg-success">Income</span></td>
-                                    <td>₦42,000</td>
-                                </tr>
-                            </tbody>
-                        </table>
+        <!-- Charts and Analytics -->
+        <div class="row mb-4">
+            <div class="col-lg-8 mb-4">
+                <div class="card chart-card h-100">
+                    <div class="card-header bg-transparent border-0 pt-4">
+                        <h5 class="card-title mb-0 text-primary">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Revenue vs Expenses Trend (Last 6 Months)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="revenueChart" height="300"></canvas>
                     </div>
                 </div>
-                <div class="card-footer">
-                    <a href="#" class="btn btn-sm btn-outline-primary">View All Transactions</a>
+            </div>
+            
+            <div class="col-lg-4 mb-4">
+                <div class="card chart-card h-100">
+                    <div class="card-header bg-transparent border-0 pt-4">
+                        <h5 class="card-title mb-0 text-primary">
+                            <i class="fas fa-chart-pie me-2"></i>
+                            Payment Methods Distribution
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="paymentMethodChart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Quick Actions & Analytics -->
+        <div class="row mb-4">
+            <div class="col-lg-4 mb-4">
+                <div class="card action-card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-bolt me-2"></i>Quick Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-3">
+                            <a href="{% url 'accounting:fee_create' %}" class="btn btn-outline-success quick-action-btn">
+                                <i class="fas fa-plus-circle me-2"></i>Create New Fee
+                            </a>
+                            <a href="{% url 'accounting:payment_create' %}" class="btn btn-outline-info quick-action-btn">
+                                <i class="fas fa-credit-card me-2"></i>Record Payment
+                            </a>
+                            <a href="{% url 'accounting:expense_create' %}" class="btn btn-outline-warning quick-action-btn">
+                                <i class="fas fa-receipt me-2"></i>Add Expense
+                            </a>
+                            <a href="{% url 'accounting:payroll_list' %}" class="btn btn-outline-secondary quick-action-btn">
+                                <i class="fas fa-users me-2"></i>Manage Payroll
+                            </a>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-chart-bar me-2"></i>Quick Stats
+                        </h6>
+                        <div class="quick-stat-item">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">Today's Payments</small>
+                                <strong class="text-success">₦{{ today_payments|floatformat:0 }}</strong>
+                            </div>
+                        </div>
+                        <div class="quick-stat-item">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">This Week</small>
+                                <strong class="text-info">₦{{ week_payments|floatformat:0 }}</strong>
+                            </div>
+                        </div>
+                        <div class="quick-stat-item">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">This Month</small>
+                                <strong class="text-primary">₦{{ month_payments|floatformat:0 }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 mb-4">
+                <div class="card action-card h-100">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-history me-2"></i>Recent Payments
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% for payment in recent_payments %}
+                        <div class="payment-item">
+                            <div class="d-flex align-items-center">
+                                <div class="student-avatar bg-primary">
+                                    {{ payment.tuition_fee.student.user.first_name.0 }}{{ payment.tuition_fee.student.user.last_name.0 }}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <strong>{{ payment.tuition_fee.student.user.get_full_name }}</strong><br>
+                                    <small class="text-muted">{{ payment.tuition_fee.student.student_id }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold text-success">₦{{ payment.amount|floatformat:0 }}</div>
+                                    <small class="text-muted">{{ payment.payment_date|timesince }} ago</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-inbox fa-2x mb-3"></i><br>
+                            No recent payments
+                        </div>
+                        {% endfor %}
+                        
+                        <div class="text-center mt-3">
+                            <a href="{% url 'accounting:payment_list' %}" class="btn btn-outline-success">
+                                <i class="fas fa-list me-2"></i>View All Payments
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 mb-4">
+                <div class="card action-card h-100">
+                    <div class="card-header bg-warning text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Pending Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if overdue_fees > 0 %}
+                        <div class="alert alert-modern alert-danger" role="alert">
+                            <i class="fas fa-clock me-2"></i>
+                            <strong>{{ overdue_fees }} fees</strong> are overdue
+                        </div>
+                        {% endif %}
+                        
+                        {% if unverified_payments > 0 %}
+                        <div class="alert alert-modern alert-warning" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>{{ unverified_payments }} payments</strong> need verification
+                        </div>
+                        {% endif %}
+                        
+                        <div class="alert alert-modern alert-info" role="alert">
+                            <i class="fas fa-file-alt me-2"></i>
+                            Monthly report due in <strong>3 days</strong>
+                        </div>
+                        
+                        <hr class="my-3">
+                        
+                        <h6 class="text-warning mb-3">
+                            <i class="fas fa-link me-2"></i>Quick Links
+                        </h6>
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'accounting:fee_list' %}?status=unpaid" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-times-circle me-2"></i>Unpaid Fees
+                            </a>
+                            <a href="{% url 'accounting:fee_list' %}?status=partial" class="btn btn-sm btn-outline-warning">
+                                <i class="fas fa-exclamation-circle me-2"></i>Partial Payments
+                            </a>
+                            <a href="{% url 'accounting:expense_list' %}" class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-receipt me-2"></i>Expense Records
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-6 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Financial Summary</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="financialSummary" width="400" height="250"></canvas>
-                </div>
-                <div class="card-footer">
-                    <div class="row text-center">
-                        <div class="col-4">
-                            <h6>Total Income</h6>
-                            <h5 class="text-success">₦12.4M</h5>
+        <!-- Professional Financial Overview Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card table-modern">
+                    <div class="card-header bg-transparent border-0 pt-4">
+                        <h5 class="card-title mb-0 text-primary">
+                            <i class="fas fa-table me-2"></i>Recent Fee Transactions
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Session/Term</th>
+                                        <th>Amount Due</th>
+                                        <th>Amount Paid</th>
+                                        <th>Outstanding</th>
+                                        <th>Status</th>
+                                        <th>Due Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for fee in recent_fees %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="student-avatar 
+                                                    {% if fee.status == 'paid' %}bg-success
+                                                    {% elif fee.status == 'partial' %}bg-warning
+                                                    {% else %}bg-danger{% endif %}">
+                                                    {{ fee.student.user.first_name.0 }}{{ fee.student.user.last_name.0 }}
+                                                </div>
+                                                <div>
+                                                    <strong>{{ fee.student.user.get_full_name }}</strong><br>
+                                                    <small class="text-muted">{{ fee.student.student_id }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ fee.academic_session }}/{{ fee.term }}</td>
+                                        <td class="fw-bold">₦{{ fee.amount_due|floatformat:0 }}</td>
+                                        <td class="text-success">₦{{ fee.amount_paid|floatformat:0 }}</td>
+                                        <td class="text-danger">₦{{ fee.amount_outstanding|floatformat:0 }}</td>
+                                        <td>
+                                            <span class="status-badge 
+                                                {% if fee.status == 'paid' %}bg-success
+                                                {% elif fee.status == 'partial' %}bg-warning
+                                                {% else %}bg-danger{% endif %}">
+                                                {{ fee.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if fee.due_date %}
+                                                {{ fee.due_date|date:"M j, Y" }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'accounting:fee_detail' fee.pk %}" class="btn btn-outline-primary" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% if fee.status != 'paid' %}
+                                                <a href="{% url 'accounting:payment_create' %}?fee={{ fee.pk }}" class="btn btn-success" title="Add Payment">
+                                                    <i class="fas fa-plus"></i>
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="8" class="text-center py-5 text-muted">
+                                            <i class="fas fa-inbox fa-3x mb-3"></i><br>
+                                            No fee records found
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="col-4">
-                            <h6>Total Expenses</h6>
-                            <h5 class="text-danger">₦8.2M</h5>
+                        {% if recent_fees %}
+                        <div class="text-center p-4">
+                            <a href="{% url 'accounting:fee_list' %}" class="btn btn-primary">
+                                <i class="fas fa-list me-2"></i>View All Fee Records
+                            </a>
                         </div>
-                        <div class="col-4">
-                            <h6>Balance</h6>
-                            <h5 class="text-primary">₦4.2M</h5>
-                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -186,43 +628,171 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Django data as JSON for JavaScript consumption -->
+<script type="application/json" id="monthly-data">{{ monthly_data|safe }}</script>
+<script type="application/json" id="payment-methods-data">
+[
+    {% for method in payment_methods %}
+    {
+        "label": "{{ method.payment_method|capfirst }}",
+        "value": {{ method.total|floatformat:0 }}
+    }{% if not forloop.last %},{% endif %}
+    {% empty %}
+    {
+        "label": "Bank Transfer",
+        "value": 50000
+    },
+    {
+        "label": "Cash",
+        "value": 30000
+    },
+    {
+        "label": "Card",
+        "value": 20000
+    }
+    {% endfor %}
+]
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const ctx = document.getElementById('financialSummary').getContext('2d');
-        const myChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['January', 'February', 'March', 'April', 'May', 'June'],
-                datasets: [{
-                    label: 'Income',
-                    data: [1800000, 2100000, 1950000, 2300000, 2150000, 2100000],
-                    backgroundColor: 'rgba(40, 167, 69, 0.7)',
-                    borderColor: 'rgba(40, 167, 69, 1)',
-                    borderWidth: 1
-                }, {
-                    label: 'Expenses',
-                    data: [1200000, 1350000, 1500000, 1400000, 1300000, 1450000],
-                    backgroundColor: 'rgba(220, 53, 69, 0.7)',
-                    borderColor: 'rgba(220, 53, 69, 1)',
-                    borderWidth: 1
-                }]
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+});
+
+function initializeCharts() {
+    // Get data from Django-generated JSON
+    const monthlyData = JSON.parse(document.getElementById('monthly-data').textContent);
+    const paymentMethods = JSON.parse(document.getElementById('payment-methods-data').textContent);
+    
+    // Revenue vs Expenses Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: monthlyData.map(item => item.month),
+            datasets: [{
+                label: 'Revenue',
+                data: monthlyData.map(item => item.revenue),
+                borderColor: '#11998e',
+                backgroundColor: 'rgba(17, 153, 142, 0.1)',
+                tension: 0.4,
+                fill: true,
+                borderWidth: 3,
+                pointBackgroundColor: '#11998e',
+                pointBorderWidth: 2,
+                pointRadius: 6,
+                pointHoverRadius: 8
+            }, {
+                label: 'Expenses',
+                data: monthlyData.map(item => item.expenses),
+                borderColor: '#ff6b6b',
+                backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                tension: 0.4,
+                fill: true,
+                borderWidth: 3,
+                pointBackgroundColor: '#ff6b6b',
+                pointBorderWidth: 2,
+                pointRadius: 6,
+                pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        padding: 20,
+                        font: {
+                            size: 12,
+                            weight: 'bold'
+                        }
+                    }
+                }
             },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            // Format the ticks to show in millions (₦)
-                            callback: function(value) {
-                                return '₦' + (value / 1000000).toFixed(1) + 'M';
-                            }
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0,0,0,0.1)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return '₦' + (value / 1000000).toFixed(1) + 'M';
+                        },
+                        font: {
+                            size: 11
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(0,0,0,0.1)'
+                    },
+                    ticks: {
+                        font: {
+                            size: 11
+                        }
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
+        }
+    });
+
+    // Payment Methods Chart
+    const paymentCtx = document.getElementById('paymentMethodChart').getContext('2d');
+    new Chart(paymentCtx, {
+        type: 'doughnut',
+        data: {
+            labels: paymentMethods.map(m => m.label),
+            datasets: [{
+                data: paymentMethods.map(m => m.value),
+                backgroundColor: [
+                    '#667eea',
+                    '#11998e',
+                    '#ff6b6b',
+                    '#f093fb',
+                    '#ffa726'
+                ],
+                borderWidth: 3,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        font: {
+                            size: 11,
+                            weight: 'bold'
                         }
                     }
                 }
             }
-        });
+        }
     });
+}
+
+function refreshDashboard() {
+    const refreshBtn = document.querySelector('[onclick="refreshDashboard()"]');
+    const originalText = refreshBtn.innerHTML;
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Refreshing...';
+    refreshBtn.disabled = true;
+    
+    // Simulate data refresh
+    setTimeout(() => {
+        location.reload();
+    }, 1500);
+}
 </script>
 {% endblock %}
