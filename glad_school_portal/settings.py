@@ -70,7 +70,6 @@ INSTALLED_APPS = [
     'rest_framework',  # Django REST Framework
     'django_filters',  # Advanced filtering
     'corsheaders',  # CORS headers
-    'debug_toolbar' if DEBUG else None,  # Debug toolbar for development
     'django_extensions',  # Django extensions
     # Project apps
     'core',  # Added core app
@@ -89,7 +88,6 @@ INSTALLED_APPS = [app for app in INSTALLED_APPS if app is not None]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  # CORS middleware (should be first)
-    'debug_toolbar.middleware.DebugToolbarMiddleware' if DEBUG else None,  # Debug toolbar
     'django.middleware.security.SecurityMiddleware',
     # Performance monitoring middleware
     'core.performance.PerformanceMonitoringMiddleware',
@@ -502,10 +500,6 @@ if DEBUG:
         '127.0.0.1',
         'localhost',
     ]
-    
-    DEBUG_TOOLBAR_CONFIG = {
-        'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG,
-    }
 
 # Performance monitoring settings
 SLOW_REQUEST_THRESHOLD = env.float('SLOW_REQUEST_THRESHOLD', default=2.0)  # seconds

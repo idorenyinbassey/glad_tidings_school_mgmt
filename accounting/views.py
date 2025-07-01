@@ -21,6 +21,104 @@ def accounting_home(request):
     from decimal import Decimal
     import json
     
+    # Check if this is an AJAX request for real-time data
+    if request.GET.get('ajax'):
+        ajax_type = request.GET.get('ajax')
+        
+        if ajax_type == 'revenue_data':
+            # Return only monthly data for revenue chart
+            today = timezone.now().date()
+            current_month_start = today.replace(day=1)
+            
+            monthly_data = []
+            for i in range(6):
+                month_start = (current_month_start - timedelta(days=32*i)).replace(day=1)
+                month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+                
+                month_revenue = Payment.objects.filter(
+                    payment_date__gte=month_start,
+                    payment_date__lte=month_end
+                ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+                
+                month_expenses = Expense.objects.filter(
+                    date__gte=month_start,
+                    date__lte=month_end
+                ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+                
+                monthly_data.append({
+                    'month': month_start.strftime('%b %Y'),
+                    'revenue': float(month_revenue),
+                    'expenses': float(month_expenses)
+                })
+            
+            # Reverse to get chronological order
+            monthly_data.reverse()
+            
+            return JsonResponse({
+                'monthly_data': monthly_data,
+                'status': 'success'
+            })
+        
+        elif ajax_type == 'payment_methods':
+            # Return payment method distribution data
+            payment_methods = Payment.objects.values('method').annotate(
+                total=Sum('amount'), count=Count('id')
+            ).order_by('-total')
+            
+            payment_methods_data = []
+            for method in payment_methods:
+                payment_methods_data.append({
+                    'payment_method': method['method'],
+                    'total': float(method['total']),
+                    'count': method['count']
+                })
+            
+            return JsonResponse({
+                'payment_methods': payment_methods_data,
+                'status': 'success'
+            })
+        
+        elif ajax_type == 'dashboard_metrics':
+            # Return all dashboard metrics for complete refresh
+            today = timezone.now().date()
+            current_month_start = today.replace(day=1)
+            
+            # Revenue calculation
+            total_revenue = Payment.objects.aggregate(total=Sum('amount'))['total'] or Decimal('0')
+            
+            # Expenses calculation  
+            total_expenses = Expense.objects.aggregate(total=Sum('amount'))['total'] or Decimal('0')
+            
+            # Outstanding fees calculation
+            outstanding_fees_data = TuitionFee.objects.aggregate(
+                total_due=Sum('amount_due'),
+                total_paid=Sum('amount_paid')
+            )
+            total_due = outstanding_fees_data['total_due'] or Decimal('0')
+            total_paid = outstanding_fees_data['total_paid'] or Decimal('0')
+            outstanding_fees = max(Decimal('0'), total_due - total_paid)
+            
+            # Collection rate
+            collection_rate = (total_paid / total_due * 100) if total_due > 0 else 0
+            
+            # Overdue fees count
+            overdue_fees = TuitionFee.objects.filter(
+                status__in=['unpaid', 'partial'],
+                due_date__lt=today
+            ).count()
+            
+            return JsonResponse({
+                'total_revenue': float(total_revenue),
+                'total_expenses': float(total_expenses),
+                'outstanding_fees': float(outstanding_fees),
+                'collection_rate': float(collection_rate),
+                'overdue_fees': overdue_fees,
+                'net_income': float(total_revenue - total_expenses),
+                'status': 'success'
+            })
+    
+    # Regular dashboard view logic continues...
+    
     # Date ranges for analysis
     today = timezone.now().date()
     current_month_start = today.replace(day=1)

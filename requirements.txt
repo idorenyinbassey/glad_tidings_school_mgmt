@@ -26,7 +26,6 @@ gunicorn  # Python WSGI HTTP Server for UNIX
 django-oauth-toolkit  # OAuth2 provider for Django (optional)
 
 # Monitoring and debugging (development)
-django-debug-toolbar  # Debug toolbar for development
 django-extensions  # Additional Django extensions
 
 # Testing and debugging

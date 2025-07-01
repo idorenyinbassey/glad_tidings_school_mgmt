@@ -1,0 +1,389 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Payroll Management - Glad Tidings School{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+.payroll-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.payroll-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+}
+
+.status-badge {
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-paid { 
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%); 
+    color: white; 
+}
+
+.status-unpaid { 
+    background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); 
+    color: white; 
+}
+
+.filter-card {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 15px;
+    border: none;
+}
+
+.stats-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    border: none;
+}
+
+.payroll-amount {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.staff-info {
+    display: flex;
+    align-items: center;
+}
+
+.staff-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    margin-right: 12px;
+}
+
+.action-buttons .btn {
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="mb-0">Payroll Management</h1>
+                    <p class="text-muted">Manage staff salaries and payments</p>
+                </div>
+                <div>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#generatePayrollModal">
+                        <i class="fas fa-plus me-2"></i>Generate Payroll
+                    </button>
+                    <a href="{% url 'accounting:home' %}" class="btn btn-outline-secondary ms-2">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="row mb-4">
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-money-bill-wave fa-2x mb-3"></i>
+                    <h3 class="mb-0">₦{{ total_payroll|floatformat:0 }}</h3>
+                    <small>Total Payroll</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle fa-2x mb-3"></i>
+                    <h3 class="mb-0">₦{{ paid_payroll|floatformat:0 }}</h3>
+                    <small>Paid Amount</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x mb-3"></i>
+                    <h3 class="mb-0">₦{{ unpaid_payroll|floatformat:0 }}</h3>
+                    <small>Pending Amount</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-2x mb-3"></i>
+                    <h3 class="mb-0">{{ page_obj.paginator.count }}</h3>
+                    <small>Total Records</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card filter-card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Year</label>
+                            <select name="year" class="form-select">
+                                <option value="">All Years</option>
+                                {% for year in "2020,2021,2022,2023,2024,2025"|split:"," %}
+                                    <option value="{{ year }}" {% if year_filter == year %}selected{% endif %}>{{ year }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Month</label>
+                            <select name="month" class="form-select">
+                                <option value="">All Months</option>
+                                <option value="January" {% if month_filter == 'January' %}selected{% endif %}>January</option>
+                                <option value="February" {% if month_filter == 'February' %}selected{% endif %}>February</option>
+                                <option value="March" {% if month_filter == 'March' %}selected{% endif %}>March</option>
+                                <option value="April" {% if month_filter == 'April' %}selected{% endif %}>April</option>
+                                <option value="May" {% if month_filter == 'May' %}selected{% endif %}>May</option>
+                                <option value="June" {% if month_filter == 'June' %}selected{% endif %}>June</option>
+                                <option value="July" {% if month_filter == 'July' %}selected{% endif %}>July</option>
+                                <option value="August" {% if month_filter == 'August' %}selected{% endif %}>August</option>
+                                <option value="September" {% if month_filter == 'September' %}selected{% endif %}>September</option>
+                                <option value="October" {% if month_filter == 'October' %}selected{% endif %}>October</option>
+                                <option value="November" {% if month_filter == 'November' %}selected{% endif %}>November</option>
+                                <option value="December" {% if month_filter == 'December' %}selected{% endif %}>December</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Payment Status</label>
+                            <select name="paid" class="form-select">
+                                <option value="">All Status</option>
+                                <option value="true" {% if paid_filter == 'true' %}selected{% endif %}>Paid</option>
+                                <option value="false" {% if paid_filter == 'false' %}selected{% endif %}>Unpaid</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-end h-100">
+                                <button type="submit" class="btn btn-primary me-2">
+                                    <i class="fas fa-search me-2"></i>Filter
+                                </button>
+                                <a href="{% url 'accounting:payroll_list' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Clear
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payroll List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card payroll-card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Payroll Records</h5>
+                </div>
+                <div class="card-body">
+                    {% if page_obj %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Staff Member</th>
+                                        <th>Period</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Payment Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for payroll in page_obj %}
+                                    <tr>
+                                        <td>
+                                            <div class="staff-info">
+                                                <div class="staff-avatar">
+                                                    {{ payroll.staff.user.first_name|first }}{{ payroll.staff.user.last_name|first }}
+                                                </div>
+                                                <div>
+                                                    <strong>{{ payroll.staff.user.get_full_name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ payroll.staff.staff_id }} - {{ payroll.staff.get_position_display }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <strong>{{ payroll.month }} {{ payroll.year }}</strong>
+                                        </td>
+                                        <td>
+                                            <span class="payroll-amount text-primary">₦{{ payroll.amount|floatformat:2 }}</span>
+                                        </td>
+                                        <td>
+                                            {% if payroll.paid %}
+                                                <span class="status-badge status-paid">
+                                                    <i class="fas fa-check me-1"></i>Paid
+                                                </span>
+                                            {% else %}
+                                                <span class="status-badge status-unpaid">
+                                                    <i class="fas fa-clock me-1"></i>Unpaid
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if payroll.paid_date %}
+                                                {{ payroll.paid_date|date:"M d, Y" }}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                {% if not payroll.paid %}
+                                                    <button class="btn btn-sm btn-success" onclick="markAsPaid({{ payroll.id }})" title="Mark as Paid">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                {% endif %}
+                                                <button class="btn btn-sm btn-outline-info" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-primary" title="Print Payslip">
+                                                    <i class="fas fa-print"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if page_obj.has_other_pages %}
+                        <nav aria-label="Payroll pagination">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if request.GET.month %}&month={{ request.GET.month }}{% endif %}{% if request.GET.paid %}&paid={{ request.GET.paid }}{% endif %}">First</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if request.GET.month %}&month={{ request.GET.month }}{% endif %}{% if request.GET.paid %}&paid={{ request.GET.paid }}{% endif %}">Previous</a>
+                                    </li>
+                                {% endif %}
+
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                                </li>
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if request.GET.month %}&month={{ request.GET.month }}{% endif %}{% if request.GET.paid %}&paid={{ request.GET.paid }}{% endif %}">Next</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if request.GET.month %}&month={{ request.GET.month }}{% endif %}{% if request.GET.paid %}&paid={{ request.GET.paid }}{% endif %}">Last</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-users fa-4x text-muted mb-3"></i>
+                            <h4 class="text-muted">No Payroll Records Found</h4>
+                            <p class="text-muted">No payroll records match your current filters.</p>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#generatePayrollModal">
+                                <i class="fas fa-plus me-2"></i>Generate First Payroll
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Generate Payroll Modal -->
+<div class="modal fade" id="generatePayrollModal" tabindex="-1" aria-labelledby="generatePayrollModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="generatePayrollModalLabel">Generate Payroll</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="generatePayrollForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="month" class="form-label">Month</label>
+                        <select class="form-select" id="month" name="month" required>
+                            <option value="">Select Month</option>
+                            <option value="January">January</option>
+                            <option value="February">February</option>
+                            <option value="March">March</option>
+                            <option value="April">April</option>
+                            <option value="May">May</option>
+                            <option value="June">June</option>
+                            <option value="July">July</option>
+                            <option value="August">August</option>
+                            <option value="September">September</option>
+                            <option value="October">October</option>
+                            <option value="November">November</option>
+                            <option value="December">December</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="year" class="form-label">Year</label>
+                        <input type="number" class="form-control" id="year" name="year" value="2025" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="defaultAmount" class="form-label">Default Amount (₦)</label>
+                        <input type="number" class="form-control" id="defaultAmount" name="default_amount" step="0.01" placeholder="Enter default salary amount">
+                        <div class="form-text">This will be used for staff without existing salary records.</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="generatePayroll()">
+                    <i class="fas fa-cog me-2"></i>Generate Payroll
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function generatePayroll() {
+    // This would typically send an AJAX request to generate payroll
+    alert('Payroll generation feature will be implemented in the backend.');
+    $('#generatePayrollModal').modal('hide');
+}
+
+function markAsPaid(payrollId) {
+    if (confirm('Mark this payroll as paid?')) {
+        // This would typically send an AJAX request to mark as paid
+        alert('Mark as paid feature will be implemented in the backend.');
+        location.reload();
+    }
+}
+</script>
+{% endblock %}

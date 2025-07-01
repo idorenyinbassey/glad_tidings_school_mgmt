@@ -293,6 +293,35 @@
             </div>
         </div>
 
+        <!-- Financial Alerts & Notifications -->
+        {% if overdue_fees > 0 or collection_rate < 85 %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-modern alert-warning" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                        <div>
+                            <h6 class="alert-heading mb-1">Financial Attention Required</h6>
+                            <div class="small">
+                                {% if overdue_fees > 0 %}
+                                    <strong>{{ overdue_fees }}</strong> overdue fee(s) require immediate attention.
+                                {% endif %}
+                                {% if collection_rate < 85 %}
+                                    Collection rate is <strong>{{ collection_rate }}%</strong> (Target: 95%).
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="ms-auto">
+                            <a href="{% url 'accounting:fee_list' %}?status=unpaid" class="btn btn-sm btn-warning">
+                                <i class="fas fa-eye me-1"></i>Review Fees
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Key Financial Metrics -->
         <div class="row mb-4">
             <div class="col-xl-3 col-lg-6 mb-4">
@@ -362,10 +391,15 @@
             <div class="col-lg-8 mb-4">
                 <div class="card chart-card h-100">
                     <div class="card-header bg-transparent border-0 pt-4">
-                        <h5 class="card-title mb-0 text-primary">
-                            <i class="fas fa-chart-line me-2"></i>
-                            Revenue vs Expenses Trend (Last 6 Months)
-                        </h5>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0 text-primary">
+                                <i class="fas fa-chart-line me-2"></i>
+                                Revenue vs Expenses Trend (Last 6 Months)
+                            </h5>
+                            <button onclick="refreshRevenueChart()" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
                         <canvas id="revenueChart" height="300"></canvas>
@@ -376,10 +410,15 @@
             <div class="col-lg-4 mb-4">
                 <div class="card chart-card h-100">
                     <div class="card-header bg-transparent border-0 pt-4">
-                        <h5 class="card-title mb-0 text-primary">
-                            <i class="fas fa-chart-pie me-2"></i>
-                            Payment Methods Distribution
-                        </h5>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0 text-primary">
+                                <i class="fas fa-chart-pie me-2"></i>
+                                Payment Methods Distribution
+                            </h5>
+                            <button onclick="refreshPaymentChart()" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
                         <canvas id="paymentMethodChart" height="250"></canvas>
@@ -404,12 +443,15 @@
                             <a href="{% url 'accounting:payment_create' %}" class="btn btn-outline-info quick-action-btn">
                                 <i class="fas fa-credit-card me-2"></i>Record Payment
                             </a>
-                            <a href="{% url 'accounting:expense_create' %}" class="btn btn-outline-warning quick-action-btn">
-                                <i class="fas fa-receipt me-2"></i>Add Expense
+                            <a href="{% url 'accounting:expense_list' %}" class="btn btn-outline-warning quick-action-btn">
+                                <i class="fas fa-receipt me-2"></i>View Expenses
                             </a>
                             <a href="{% url 'accounting:payroll_list' %}" class="btn btn-outline-secondary quick-action-btn">
                                 <i class="fas fa-users me-2"></i>Manage Payroll
                             </a>
+                            <button onclick="refreshDashboard()" class="btn btn-outline-primary quick-action-btn">
+                                <i class="fas fa-sync-alt me-2"></i>Refresh Data
+                            </button>
                         </div>
                         
                         <hr class="my-4">
@@ -442,9 +484,14 @@
             <div class="col-lg-4 mb-4">
                 <div class="card action-card h-100">
                     <div class="card-header bg-success text-white">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-history me-2"></i>Recent Payments
-                        </h5>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-history me-2"></i>Recent Payments
+                            </h5>
+                            <a href="{% url 'accounting:payment_list' %}" class="btn btn-sm btn-light">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </div>
                     </div>
                     <div class="card-body">
                         {% for payment in recent_payments %}
@@ -660,6 +707,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeCharts();
 });
 
+// Store chart instances globally for refresh functionality
+let revenueChart, paymentMethodChart;
+
 function initializeCharts() {
     // Get data from Django-generated JSON
     const monthlyData = JSON.parse(document.getElementById('monthly-data').textContent);
@@ -667,7 +717,7 @@ function initializeCharts() {
     
     // Revenue vs Expenses Chart
     const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-    new Chart(revenueCtx, {
+    revenueChart = new Chart(revenueCtx, {
         type: 'line',
         data: {
             labels: monthlyData.map(item => item.month),
@@ -747,7 +797,7 @@ function initializeCharts() {
 
     // Payment Methods Chart
     const paymentCtx = document.getElementById('paymentMethodChart').getContext('2d');
-    new Chart(paymentCtx, {
+    paymentMethodChart = new Chart(paymentCtx, {
         type: 'doughnut',
         data: {
             labels: paymentMethods.map(m => m.label),
@@ -783,16 +833,86 @@ function initializeCharts() {
     });
 }
 
+// Chart update functions
+function updateRevenueChart(monthlyData) {
+    if (revenueChart) {
+        revenueChart.data.labels = monthlyData.map(item => item.month);
+        revenueChart.data.datasets[0].data = monthlyData.map(item => item.revenue);
+        revenueChart.data.datasets[1].data = monthlyData.map(item => item.expenses);
+        revenueChart.update('active');
+    }
+}
+
+function updatePaymentMethodChart(paymentMethods) {
+    if (paymentMethodChart) {
+        paymentMethodChart.data.labels = paymentMethods.map(m => m.payment_method.charAt(0).toUpperCase() + m.payment_method.slice(1));
+        paymentMethodChart.data.datasets[0].data = paymentMethods.map(m => m.total);
+        paymentMethodChart.update('active');
+    }
+}
+
 function refreshDashboard() {
     const refreshBtn = document.querySelector('[onclick="refreshDashboard()"]');
     const originalText = refreshBtn.innerHTML;
     refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Refreshing...';
     refreshBtn.disabled = true;
     
-    // Simulate data refresh
+    // Reload the page to get fresh data
     setTimeout(() => {
         location.reload();
-    }, 1500);
+    }, 1000);
 }
+
+function refreshRevenueChart() {
+    const refreshBtn = document.querySelector('[onclick="refreshRevenueChart()"]');
+    const originalHTML = refreshBtn.innerHTML;
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    refreshBtn.disabled = true;
+    
+    // Fetch fresh data via AJAX
+    fetch('{% url "accounting:home" %}?ajax=revenue_data')
+        .then(response => response.json())
+        .then(data => {
+            // Update chart with new data
+            updateRevenueChart(data.monthly_data);
+            refreshBtn.innerHTML = originalHTML;
+            refreshBtn.disabled = false;
+        })
+        .catch(error => {
+            console.error('Error refreshing revenue chart:', error);
+            refreshBtn.innerHTML = originalHTML;
+            refreshBtn.disabled = false;
+        });
+}
+
+function refreshPaymentChart() {
+    const refreshBtn = document.querySelector('[onclick="refreshPaymentChart()"]');
+    const originalHTML = refreshBtn.innerHTML;
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    refreshBtn.disabled = true;
+    
+    // Fetch fresh data via AJAX
+    fetch('{% url "accounting:home" %}?ajax=payment_methods')
+        .then(response => response.json())
+        .then(data => {
+            // Update chart with new data
+            updatePaymentMethodChart(data.payment_methods);
+            refreshBtn.innerHTML = originalHTML;
+            refreshBtn.disabled = false;
+        })
+        .catch(error => {
+            console.error('Error refreshing payment chart:', error);
+            refreshBtn.innerHTML = originalHTML;
+            refreshBtn.disabled = false;
+        });
+}
+
+// Auto-refresh dashboard every 5 minutes
+setInterval(function() {
+    console.log('Auto-refreshing dashboard data...');
+    // Silently refresh chart data without page reload
+    refreshRevenueChart();
+    refreshPaymentChart();
+}, 300000); // 5 minutes
 </script>
 {% endblock %}

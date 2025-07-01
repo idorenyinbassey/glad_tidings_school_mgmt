@@ -1,0 +1,322 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Recent Payments - Glad Tidings School{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+.payment-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.payment-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+}
+
+.method-badge {
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.method-cash { background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; }
+.method-bank { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; }
+.method-card { background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); color: white; }
+.method-online { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; }
+
+.filter-card {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 15px;
+    border: none;
+}
+
+.stats-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    border: none;
+}
+
+.payment-amount {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #059669;
+}
+
+.student-info {
+    display: flex;
+    align-items: center;
+}
+
+.student-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    margin-right: 12px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="mb-0">Recent Payments</h1>
+                    <p class="text-muted">Track and manage fee payments</p>
+                </div>
+                <div>
+                    <a href="{% url 'accounting:payment_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Record Payment
+                    </a>
+                    <a href="{% url 'accounting:home' %}" class="btn btn-outline-secondary ms-2">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="row mb-4">
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-money-bill-wave fa-2x mb-3"></i>
+                    <h3 class="mb-0">₦{{ total_amount|floatformat:0 }}</h3>
+                    <small>Total Amount</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-receipt fa-2x mb-3"></i>
+                    <h3 class="mb-0">{{ page_obj.paginator.count }}</h3>
+                    <small>Total Payments</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-credit-card fa-2x mb-3"></i>
+                    <h3 class="mb-0">{{ payment_methods|length }}</h3>
+                    <small>Payment Methods</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-calendar fa-2x mb-3"></i>
+                    <h3 class="mb-0">{{ page_obj.object_list|length }}</h3>
+                    <small>This Page</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card filter-card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Payment Method</label>
+                            <select name="method" class="form-select">
+                                <option value="">All Methods</option>
+                                <option value="cash" {% if method_filter == 'cash' %}selected{% endif %}>Cash</option>
+                                <option value="bank" {% if method_filter == 'bank' %}selected{% endif %}>Bank Transfer</option>
+                                <option value="card" {% if method_filter == 'card' %}selected{% endif %}>Card</option>
+                                <option value="online" {% if method_filter == 'online' %}selected{% endif %}>Online Payment</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">From Date</label>
+                            <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">To Date</label>
+                            <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Search</label>
+                            <input type="text" name="search" class="form-control" placeholder="Search student, receipt..." value="{{ search }}">
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-2"></i>Filter
+                            </button>
+                            <a href="{% url 'accounting:payment_list' %}" class="btn btn-outline-secondary ms-2">
+                                <i class="fas fa-times me-2"></i>Clear
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Methods Summary -->
+    {% if payment_methods %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card payment-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Payment Methods Breakdown</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for method in payment_methods %}
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <span class="method-badge method-{{ method.method }}">
+                                    {{ method.method|title }}
+                                </span>
+                                <div class="mt-2">
+                                    <div class="payment-amount">₦{{ method.total|floatformat:0 }}</div>
+                                    <small class="text-muted">{{ method.count }} payment{{ method.count|pluralize }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Payment List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card payment-card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Payment Records</h5>
+                </div>
+                <div class="card-body">
+                    {% if page_obj %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Student</th>
+                                        <th>Amount</th>
+                                        <th>Method</th>
+                                        <th>Receipt #</th>
+                                        <th>Reference</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for payment in page_obj %}
+                                    <tr>
+                                        <td>{{ payment.payment_date|date:"M d, Y" }}</td>
+                                        <td>
+                                            <div class="student-info">
+                                                <div class="student-avatar">
+                                                    {{ payment.tuition_fee.student.user.first_name|first }}{{ payment.tuition_fee.student.user.last_name|first }}
+                                                </div>
+                                                <div>
+                                                    <strong>{{ payment.tuition_fee.student.user.get_full_name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ payment.tuition_fee.student.admission_number }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="payment-amount">₦{{ payment.amount|floatformat:2 }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="method-badge method-{{ payment.method }}">
+                                                {{ payment.get_method_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if payment.receipt_number %}
+                                                <code>{{ payment.receipt_number }}</code>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if payment.reference %}
+                                                <small class="text-muted">{{ payment.reference|truncatechars:20 }}</small>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-success" title="Print Receipt">
+                                                <i class="fas fa-print"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if page_obj.has_other_pages %}
+                        <nav aria-label="Payment pagination">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if request.GET.method %}&method={{ request.GET.method }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">First</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.method %}&method={{ request.GET.method }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Previous</a>
+                                    </li>
+                                {% endif %}
+
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                                </li>
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.method %}&method={{ request.GET.method }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Next</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.method %}&method={{ request.GET.method }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Last</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-credit-card fa-4x text-muted mb-3"></i>
+                            <h4 class="text-muted">No Payments Found</h4>
+                            <p class="text-muted">No payments match your current filters.</p>
+                            <a href="{% url 'accounting:payment_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Record First Payment
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
