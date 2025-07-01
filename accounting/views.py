@@ -703,7 +703,13 @@ def expense_create(request):
 @staff_required
 def payroll_list(request):
     """List payroll records with filtering"""
+    from datetime import datetime
+    
     payrolls = Payroll.objects.select_related('staff__user').order_by('-year', '-month')
+    
+    # Get current year and create year range
+    current_year = datetime.now().year
+    years = list(range(2020, current_year + 2))  # From 2020 to next year
     
     # Filtering
     year_filter = request.GET.get('year')
@@ -730,8 +736,16 @@ def payroll_list(request):
     paid_payroll = payrolls.filter(paid=True).aggregate(total=Sum('amount'))['total'] or 0
     unpaid_payroll = payrolls.filter(paid=False).aggregate(total=Sum('amount'))['total'] or 0
     
+    # List of months for filter dropdown
+    months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ]
+    
     context = {
         'page_obj': page_obj,
+        'years': years,
+        'months': months,
         'total_payroll': total_payroll,
         'paid_payroll': paid_payroll,
         'unpaid_payroll': unpaid_payroll,

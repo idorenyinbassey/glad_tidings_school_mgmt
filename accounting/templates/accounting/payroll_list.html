@@ -149,8 +149,8 @@
                             <label class="form-label">Year</label>
                             <select name="year" class="form-select">
                                 <option value="">All Years</option>
-                                {% for year in "2020,2021,2022,2023,2024,2025"|split:"," %}
-                                    <option value="{{ year }}" {% if year_filter == year %}selected{% endif %}>{{ year }}</option>
+                                {% for year in years %}
+                                    <option value="{{ year }}" {% if year_filter == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -158,18 +158,9 @@
                             <label class="form-label">Month</label>
                             <select name="month" class="form-select">
                                 <option value="">All Months</option>
-                                <option value="January" {% if month_filter == 'January' %}selected{% endif %}>January</option>
-                                <option value="February" {% if month_filter == 'February' %}selected{% endif %}>February</option>
-                                <option value="March" {% if month_filter == 'March' %}selected{% endif %}>March</option>
-                                <option value="April" {% if month_filter == 'April' %}selected{% endif %}>April</option>
-                                <option value="May" {% if month_filter == 'May' %}selected{% endif %}>May</option>
-                                <option value="June" {% if month_filter == 'June' %}selected{% endif %}>June</option>
-                                <option value="July" {% if month_filter == 'July' %}selected{% endif %}>July</option>
-                                <option value="August" {% if month_filter == 'August' %}selected{% endif %}>August</option>
-                                <option value="September" {% if month_filter == 'September' %}selected{% endif %}>September</option>
-                                <option value="October" {% if month_filter == 'October' %}selected{% endif %}>October</option>
-                                <option value="November" {% if month_filter == 'November' %}selected{% endif %}>November</option>
-                                <option value="December" {% if month_filter == 'December' %}selected{% endif %}>December</option>
+                                {% for month in months %}
+                                    <option value="{{ month }}" {% if month_filter == month %}selected{% endif %}>{{ month }}</option>
+                                {% endfor %}
                             </select>
                         </div>
                         <div class="col-md-3">
