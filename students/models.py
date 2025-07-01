@@ -10,6 +10,8 @@ class StudentProfile(models.Model):
     address = models.TextField(blank=True)
     guardian_name = models.CharField(max_length=100, blank=True)
     guardian_contact = models.CharField(max_length=30, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
     # Add more fields as needed
 
     def clean(self):

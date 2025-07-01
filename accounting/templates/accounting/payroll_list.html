@@ -375,9 +375,82 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function generatePayroll() {
-    // This would typically send an AJAX request to generate payroll
-    alert('Payroll generation feature will be implemented in the backend.');
-    $('#generatePayrollModal').modal('hide');
+    const month = document.getElementById('payrollMonth').value;
+    const year = document.getElementById('payrollYear').value;
+    
+    if (!month || !year) {
+        alert('Please select both month and year');
+        return;
+    }
+    
+    const generateBtn = document.querySelector('#generatePayrollModal .btn-primary');
+    const originalText = generateBtn.innerHTML;
+    
+    // Show loading state
+    generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
+    generateBtn.disabled = true;
+    
+    // Prepare form data
+    const formData = new FormData();
+    formData.append('month', month);
+    formData.append('year', year);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    
+    // Make AJAX request
+    fetch('{% url "accounting:generate_payroll_ajax" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        generateBtn.innerHTML = originalText;
+        generateBtn.disabled = false;
+        
+        if (data.success) {
+            // Show success message
+            const alertHtml = `
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Success!</strong> ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Insert alert at the top of the page
+            const container = document.querySelector('.container-fluid');
+            container.insertAdjacentHTML('afterbegin', alertHtml);
+            
+            // Close modal
+            $('#generatePayrollModal').modal('hide');
+            
+            // Reload page to show new payroll entries
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            // Show error message
+            const alertHtml = `
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Error:</strong> ${data.error}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            const modalBody = document.querySelector('#generatePayrollModal .modal-body');
+            modalBody.insertAdjacentHTML('afterbegin', alertHtml);
+        }
+    })
+    .catch(error => {
+        generateBtn.innerHTML = originalText;
+        generateBtn.disabled = false;
+        
+        console.error('Error:', error);
+        alert('Network error occurred while generating payroll');
+    });
 }
 
 function markAsPaid(payrollId) {

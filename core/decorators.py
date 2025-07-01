@@ -31,10 +31,21 @@ def accountant_required(view_func):
             return redirect('login')
         
         if not (user.role == 'accountant' or user.role == 'admin' or user.is_superuser):
-            return HttpResponse("You don't have permission to access this page.", status=403)
+            # Redirect to their appropriate dashboard instead of showing error
+            if user.role == 'student':
+                return redirect('dashboard')
+            elif user.role == 'staff':
+                return redirect('dashboard')
+            elif user.role == 'it_support':
+                return redirect('dashboard')
+            else:
+                error_msg = ("You don't have permission to access this page. "
+                            "Only accountants and administrators can access financial modules.")
+                return HttpResponse(error_msg, status=403)
             
         return view_func(request, *args, **kwargs)
     return _wrapped_view
+
 
 def admin_required(view_func):
     """

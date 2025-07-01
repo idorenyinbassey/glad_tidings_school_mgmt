@@ -30,4 +30,9 @@ urlpatterns = [
     # AJAX endpoints
     path('ajax/student-search/', views.student_search_ajax, name='student_search_ajax'),
     path('ajax/fee-statistics/', views.fee_statistics_ajax, name='fee_statistics_ajax'),
+    path('ajax/generate-report/', views.generate_report_ajax, name='generate_report_ajax'),
+    path('ajax/dashboard-stats/', views.dashboard_stats_ajax, name='dashboard_stats_ajax'),
+    
+    # Payroll Management
+    path('payroll/generate/', views.generate_payroll_ajax, name='generate_payroll_ajax'),
 ]

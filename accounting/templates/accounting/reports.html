@@ -125,8 +125,12 @@
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Income Statement (Current Month)</h5>
                     <div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-light">Export</button>
-                        <button type="button" class="btn btn-sm btn-light">Print</button>
+                        <button type="button" class="btn btn-sm btn-light" id="exportReport" title="Export Report">
+                            <i class="fas fa-download me-1"></i>Export
+                        </button>
+                        <button type="button" class="btn btn-sm btn-light" id="printReport" title="Print Report">
+                            <i class="fas fa-print me-1"></i>Print
+                        </button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -497,39 +501,198 @@
             const reportType = document.getElementById('reportType').value;
             const datePeriod = document.getElementById('datePeriod').value;
             const format = document.getElementById('format').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
             
             // Show loading state
             this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
             this.disabled = true;
             
-            // Simulate report generation (replace with actual AJAX call)
-            setTimeout(() => {
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('reportType', reportType);
+            formData.append('datePeriod', datePeriod);
+            formData.append('format', format);
+            if (startDate) formData.append('startDate', startDate);
+            if (endDate) formData.append('endDate', endDate);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            
+            // Make AJAX request
+            fetch('{% url "accounting:generate_report_ajax" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
                 this.innerHTML = 'Generate Report';
                 this.disabled = false;
                 
-                // Show success message
-                const alertHtml = `
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <i class="fas fa-check-circle me-2"></i>
-                        <strong>Success!</strong> ${reportType} for ${datePeriod} has been generated in ${format} format.
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                `;
-                
-                // Insert alert at the top of the form card
-                const formCard = this.closest('.card');
-                formCard.insertAdjacentHTML('afterbegin', alertHtml);
-                
-                // Auto-remove alert after 5 seconds
-                setTimeout(() => {
-                    const alert = formCard.querySelector('.alert');
-                    if (alert) {
-                        alert.remove();
-                    }
-                }, 5000);
-                
-            }, 2000);
+                if (data.success) {
+                    // Update the income statement with new data
+                    updateIncomeStatement(data.data);
+                    
+                    // Show success message
+                    showAlert('success', data.message);
+                    
+                    // Add to recent reports
+                    addToRecentReports(data.data);
+                } else {
+                    showAlert('danger', data.error || 'Error generating report');
+                }
+            })
+            .catch(error => {
+                this.innerHTML = 'Generate Report';
+                this.disabled = false;
+                showAlert('danger', 'Network error occurred while generating report');
+                console.error('Error:', error);
+            });
         });
+        
+        // Function to update income statement with new data
+        function updateIncomeStatement(data) {
+            if (data.report_type === 'Income Statement') {
+                // Update header
+                document.querySelector('.card-header h5').textContent = `${data.report_type} (${data.period_name})`;
+                
+                // Update table values
+                const tableRows = document.querySelectorAll('.table tbody tr');
+                tableRows.forEach(row => {
+                    const cells = row.cells;
+                    if (cells.length >= 2) {
+                        const label = cells[0].textContent.trim();
+                        if (label === 'Tuition Fees') {
+                            cells[1].textContent = `₦${data.tuition_fees.toLocaleString('en-NG', {minimumFractionDigits: 2})}`;
+                        } else if (label === 'Total Revenue') {
+                            cells[1].textContent = `₦${data.total_revenue.toLocaleString('en-NG', {minimumFractionDigits: 2})}`;
+                        } else if (label === 'Supplies') {
+                            cells[1].textContent = `₦${data.expense_categories.supplies.toLocaleString('en-NG', {minimumFractionDigits: 2})}`;
+                        } else if (label === 'Maintenance') {
+                            cells[1].textContent = `₦${data.expense_categories.maintenance.toLocaleString('en-NG', {minimumFractionDigits: 2})}`;
+                        } else if (label === 'Salaries') {
+                            cells[1].textContent = `₦${data.expense_categories.salary.toLocaleString('en-NG', {minimumFractionDigits: 2})}`;
+                        } else if (label === 'Utilities') {
+                            cells[1].textContent = `₦${data.expense_categories.utility.toLocaleString('en-NG', {minimumFractionDigits: 2})}`;
+                        } else if (label === 'Other Expenses') {
+                            cells[1].textContent = `₦${data.expense_categories.other.toLocaleString('en-NG', {minimumFractionDigits: 2})}`;
+                        } else if (label === 'Total Expenses') {
+                            cells[1].textContent = `₦${data.total_expenses.toLocaleString('en-NG', {minimumFractionDigits: 2})}`;
+                        } else if (label === 'Net Income') {
+                            cells[1].textContent = `₦${data.net_income.toLocaleString('en-NG', {minimumFractionDigits: 2})}`;
+                            // Update row color based on profit/loss
+                            row.className = data.net_income >= 0 ? 'table-success fw-bold' : 'table-danger fw-bold';
+                        } else if (label === 'Profit Margin') {
+                            cells[1].textContent = `${data.profit_margin}%`;
+                        }
+                    }
+                });
+                
+                // Update quick stats cards
+                updateQuickStats(data);
+                
+                // Update charts
+                updateCharts(data);
+            }
+        }
+        
+        // Function to update quick statistics cards
+        function updateQuickStats(data) {
+            const cards = document.querySelectorAll('.card.bg-primary, .card.bg-danger, .card.bg-success, .card.bg-warning');
+            cards.forEach(card => {
+                const title = card.querySelector('.card-title').textContent;
+                const valueElement = card.querySelector('h5');
+                
+                if (title === 'Total Revenue') {
+                    valueElement.textContent = `₦${data.total_revenue.toLocaleString('en-NG', {minimumFractionDigits: 0})}`;
+                } else if (title === 'Total Expenses') {
+                    valueElement.textContent = `₦${data.total_expenses.toLocaleString('en-NG', {minimumFractionDigits: 0})}`;
+                } else if (title === 'Net Income') {
+                    valueElement.textContent = `₦${data.net_income.toLocaleString('en-NG', {minimumFractionDigits: 0})}`;
+                    // Update card color
+                    card.className = data.net_income >= 0 ? 'card bg-success text-white' : 'card bg-warning text-white';
+                    // Update icon
+                    const icon = card.querySelector('i');
+                    icon.className = data.net_income >= 0 ? 'fas fa-arrow-up fa-2x opacity-75' : 'fas fa-arrow-down fa-2x opacity-75';
+                }
+            });
+        }
+        
+        // Function to update charts with new data
+        function updateCharts(data) {
+            // Update expense chart
+            if (window.expenseChart) {
+                window.expenseChart.data.datasets[0].data = [
+                    data.expense_categories.supplies,
+                    data.expense_categories.maintenance,
+                    data.expense_categories.salary,
+                    data.expense_categories.utility,
+                    data.expense_categories.other
+                ];
+                window.expenseChart.update();
+            }
+        }
+        
+        // Function to show alerts
+        function showAlert(type, message) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Insert alert at the top of the form card
+            const formCard = document.querySelector('.card');
+            formCard.insertAdjacentHTML('afterbegin', alertHtml);
+            
+            // Auto-remove alert after 5 seconds
+            setTimeout(() => {
+                const alert = formCard.querySelector('.alert');
+                if (alert) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+        
+        // Function to add to recent reports
+        function addToRecentReports(data) {
+            const tbody = document.querySelector('.table-hover tbody');
+            const today = new Date().toISOString().split('T')[0];
+            
+            // Create new row
+            const newRow = `
+                <tr class="table-info">
+                    <td>${today}</td>
+                    <td>${data.report_type}</td>
+                    <td>${data.period_name}</td>
+                    <td>{{ request.user.get_full_name }}</td>
+                    <td><span class="badge bg-primary">PDF</span></td>
+                    <td><span class="badge bg-success">Generated</span></td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" data-report-action="view" title="View Report">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary" data-report-action="download" title="Download Report">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            
+            // Insert at the top of the table
+            tbody.insertAdjacentHTML('afterbegin', newRow);
+            
+            // Remove "No reports" message if it exists
+            const noReportsRow = tbody.querySelector('td[colspan="7"]');
+            if (noReportsRow) {
+                noReportsRow.parentElement.remove();
+            }
+        }
         
         // Report action handlers
         document.addEventListener('click', function(e) {
@@ -545,6 +708,141 @@
                 }
             }
         });
+        
+        // Export report functionality
+        document.getElementById('exportReport').addEventListener('click', function() {
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Exporting...';
+            this.disabled = true;
+            
+            // Get report data
+            const reportData = extractReportData();
+            
+            // Create CSV content
+            const csvContent = generateCSV(reportData);
+            
+            // Download CSV file
+            downloadCSV(csvContent, `financial_report_${new Date().toISOString().split('T')[0]}.csv`);
+            
+            // Reset button
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-download me-1"></i>Export';
+                this.disabled = false;
+                showAlert('success', 'Report exported successfully!');
+            }, 1000);
+        });
+        
+        // Print report functionality
+        document.getElementById('printReport').addEventListener('click', function() {
+            const printContent = generatePrintContent();
+            
+            // Create print window
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.print();
+            
+            showAlert('info', 'Print dialog opened');
+        });
+        
+        // Function to extract current report data
+        function extractReportData() {
+            const data = [];
+            const table = document.querySelector('.table-bordered');
+            const rows = table.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const cells = row.cells;
+                if (cells.length >= 2 && !row.classList.contains('table-primary') && !row.classList.contains('table-light')) {
+                    const label = cells[0].textContent.trim();
+                    const value = cells[1].textContent.trim();
+                    data.push({ label, value });
+                }
+            });
+            
+            return data;
+        }
+        
+        // Function to generate CSV content
+        function generateCSV(data) {
+            const headers = ['Description', 'Amount'];
+            const csvRows = [headers.join(',')];
+            
+            data.forEach(row => {
+                const values = [
+                    `"${row.label}"`,
+                    `"${row.value}"`
+                ];
+                csvRows.push(values.join(','));
+            });
+            
+            return csvRows.join('\n');
+        }
+        
+        // Function to download CSV
+        function downloadCSV(csvContent, filename) {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+        
+        // Function to generate print content
+        function generatePrintContent() {
+            const reportTitle = document.querySelector('.card-header h5').textContent;
+            const table = document.querySelector('.table-bordered').outerHTML;
+            
+            return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${reportTitle}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        .school-name { font-size: 24px; font-weight: bold; color: #333; }
+                        .report-title { font-size: 20px; margin: 10px 0; }
+                        .report-date { font-size: 14px; color: #666; }
+                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background-color: #f2f2f2; font-weight: bold; }
+                        .table-primary th { background-color: #007bff; color: white; }
+                        .table-success { background-color: #d4edda; }
+                        .table-danger { background-color: #f8d7da; }
+                        .fw-bold { font-weight: bold; }
+                        .text-end { text-align: right; }
+                        @media print {
+                            body { margin: 0; }
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="school-name">Glad Tidings School</div>
+                        <div class="report-title">${reportTitle}</div>
+                        <div class="report-date">Generated on ${new Date().toLocaleDateString('en-US', { 
+                            weekday: 'long', 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                        })}</div>
+                    </div>
+                    ${table}
+                    <div style="margin-top: 40px; text-align: center; font-size: 12px; color: #666;">
+                        This report was generated automatically by the Glad Tidings School Management System
+                    </div>
+                </body>
+                </html>
+            `;
+        }
     });
 </script>
 {% endblock %}

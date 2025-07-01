@@ -137,16 +137,32 @@ class Payment(models.Model):
     def __str__(self):
         return f"{self.tuition_fee} - {self.amount} on {self.payment_date}"
 
+    def clean(self):
+        """Validate the payment before saving"""
+        super().clean()
+        
+        if self.amount and self.amount <= 0:
+            raise ValidationError("Payment amount must be greater than zero")
+        
+        if self.tuition_fee and self.amount:
+            # Check for overpayment only for new payments
+            if not self.pk:  # New payment
+                total_paid = self.tuition_fee.amount_paid + self.amount
+                remaining_due = self.tuition_fee.amount_due - self.tuition_fee.amount_paid
+                
+                if total_paid > self.tuition_fee.amount_due:
+                    raise ValidationError(
+                        f"Payment of ₦{self.amount:,.2f} exceeds remaining balance of ₦{remaining_due:,.2f}. "
+                        f"Maximum payment allowed is ₦{remaining_due:,.2f}."
+                    )
+
     def save(self, *args, **kwargs):
+        # Run validation
+        self.clean()
+        
         with transaction.atomic():
             # Check if this is a new payment
             is_new = self.pk is None
-            
-            # Prevent overpayment
-            if is_new:  # Only check and update amount_paid for new payments
-                total_paid = self.tuition_fee.amount_paid + self.amount
-                if total_paid > self.tuition_fee.amount_due:
-                    raise ValueError('Payment exceeds amount due!')
             
             super().save(*args, **kwargs)
             

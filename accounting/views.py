@@ -11,7 +11,7 @@ from .forms import TuitionFeeForm, PaymentForm, ExpenseForm, PayrollForm
 from students.models import StudentProfile
 
 @login_required
-@staff_required
+@accountant_required
 def accounting_home(request):
     """
     Professional Finance Dashboard for Accountants with real-time financial metrics
@@ -287,7 +287,7 @@ def fees(request):
     return render(request, 'accounting/fees.html', context)
 
 @login_required
-@staff_required
+@accountant_required
 def reports(request):
     """
     Financial reports with real database data
@@ -880,3 +880,309 @@ def fee_statistics_ajax(request):
     """AJAX endpoint for fee statistics"""
     stats = TuitionFee.get_fee_statistics()
     return JsonResponse(stats)
+
+@login_required
+@staff_required
+def generate_report_ajax(request):
+    """AJAX endpoint for dynamic report generation"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    from .models import TuitionFee, Payment, Expense, Payroll
+    from datetime import datetime, timedelta
+    from django.db.models import Sum, Count
+    import json
+    
+    # Get parameters
+    report_type = request.POST.get('reportType', 'Income Statement')
+    period = request.POST.get('datePeriod', 'Current Month')
+    format_type = request.POST.get('format', 'PDF')
+    start_date = request.POST.get('startDate')
+    end_date = request.POST.get('endDate')
+    
+    # Calculate date ranges
+    today = timezone.now().date()
+    current_month_start = today.replace(day=1)
+    current_year_start = today.replace(month=1, day=1)
+    
+    if period == 'Current Month':
+        filter_start = current_month_start
+        filter_end = today
+        period_name = today.strftime('%B %Y')
+    elif period == 'Previous Month':
+        filter_start = (current_month_start - timedelta(days=1)).replace(day=1)
+        filter_end = current_month_start - timedelta(days=1)
+        period_name = filter_start.strftime('%B %Y')
+    elif period == 'Current Term':
+        # Assuming term is 3 months
+        filter_start = current_month_start - timedelta(days=60)
+        filter_end = today
+        period_name = f'Current Term ({filter_start.strftime("%b")} - {today.strftime("%b %Y")})'
+    elif period == 'Current Year':
+        filter_start = current_year_start
+        filter_end = today
+        period_name = f'Year {today.year}'
+    elif period == 'Previous Year':
+        filter_start = current_year_start.replace(year=today.year - 1)
+        filter_end = current_year_start - timedelta(days=1)
+        period_name = f'Year {today.year - 1}'
+    elif period == 'Custom Range' and start_date and end_date:
+        filter_start = datetime.strptime(start_date, '%Y-%m-%d').date()
+        filter_end = datetime.strptime(end_date, '%Y-%m-%d').date()
+        period_name = f'{filter_start.strftime("%b %d")} - {filter_end.strftime("%b %d, %Y")}'
+    else:
+        filter_start = current_month_start
+        filter_end = today
+        period_name = today.strftime('%B %Y')
+    
+    try:
+        # Calculate data based on report type
+        if report_type == 'Income Statement':
+            # Revenue calculations
+            total_revenue = Payment.objects.filter(
+                payment_date__gte=filter_start,
+                payment_date__lte=filter_end
+            ).aggregate(total=Sum('amount'))['total'] or 0
+            
+            # Expense calculations
+            total_expenses = Expense.objects.filter(
+                date__gte=filter_start,
+                date__lte=filter_end
+            ).aggregate(total=Sum('amount'))['total'] or 0
+            
+            # Expense breakdown
+            expense_categories = {}
+            categories = ['supplies', 'maintenance', 'salary', 'utility', 'other']
+            for category in categories:
+                expense_categories[category] = Expense.objects.filter(
+                    date__gte=filter_start,
+                    date__lte=filter_end,
+                    category=category
+                ).aggregate(total=Sum('amount'))['total'] or 0
+            
+            net_income = total_revenue - total_expenses
+            profit_margin = (net_income / total_revenue * 100) if total_revenue > 0 else 0
+            
+            data = {
+                'report_type': report_type,
+                'period_name': period_name,
+                'total_revenue': float(total_revenue),
+                'tuition_fees': float(total_revenue),
+                'total_expenses': float(total_expenses),
+                'net_income': float(net_income),
+                'profit_margin': round(profit_margin, 1),
+                'expense_categories': {k: float(v) for k, v in expense_categories.items()},
+                'report_date': today.strftime('%B %d, %Y')
+            }
+            
+        elif report_type == 'Fee Collection Report':
+            # Fee collection analysis
+            total_fees_due = TuitionFee.objects.aggregate(total=Sum('amount_due'))['total'] or 0
+            total_fees_paid = TuitionFee.objects.aggregate(total=Sum('amount_paid'))['total'] or 0
+            outstanding_fees = total_fees_due - total_fees_paid
+            collection_rate = (total_fees_paid / total_fees_due * 100) if total_fees_due > 0 else 0
+            
+            # Recent payments in period
+            recent_payments = Payment.objects.filter(
+                payment_date__gte=filter_start,
+                payment_date__lte=filter_end
+            ).count()
+            
+            data = {
+                'report_type': report_type,
+                'period_name': period_name,
+                'total_fees_due': float(total_fees_due),
+                'total_fees_paid': float(total_fees_paid),
+                'outstanding_fees': float(outstanding_fees),
+                'collection_rate': round(collection_rate, 1),
+                'recent_payments': recent_payments,
+                'report_date': today.strftime('%B %d, %Y')
+            }
+            
+        elif report_type == 'Expense Report':
+            # Detailed expense analysis
+            expenses = Expense.objects.filter(
+                date__gte=filter_start,
+                date__lte=filter_end
+            )
+            
+            total_expenses = expenses.aggregate(total=Sum('amount'))['total'] or 0
+            expense_count = expenses.count()
+            
+            # Category breakdown
+            expense_by_category = expenses.values('category').annotate(
+                total=Sum('amount'),
+                count=Count('id')
+            ).order_by('-total')
+            
+            data = {
+                'report_type': report_type,
+                'period_name': period_name,
+                'total_expenses': float(total_expenses),
+                'expense_count': expense_count,
+                'expense_by_category': list(expense_by_category),
+                'report_date': today.strftime('%B %d, %Y')
+            }
+            
+        else:
+            # Default to basic summary
+            data = {
+                'report_type': report_type,
+                'period_name': period_name,
+                'message': f'{report_type} report generated successfully',
+                'report_date': today.strftime('%B %d, %Y')
+            }
+        
+        return JsonResponse({
+            'success': True,
+            'data': data,
+            'message': f'{report_type} for {period_name} generated successfully in {format_type} format'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Error generating report: {str(e)}'
+        }, status=500)
+
+@login_required
+@staff_required
+def generate_payroll_ajax(request):
+    """AJAX endpoint for payroll generation"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    from .models import Payroll
+    from staff.models import Staff
+    from datetime import datetime
+    
+    try:
+        month = request.POST.get('month')
+        year = int(request.POST.get('year', datetime.now().year))
+        
+        if not month:
+            return JsonResponse({'success': False, 'error': 'Month is required'})
+        
+        # Check if payroll already exists for this period
+        existing_payroll = Payroll.objects.filter(month=month, year=year)
+        if existing_payroll.exists():
+            return JsonResponse({
+                'success': False, 
+                'error': f'Payroll for {month} {year} already exists. Use the edit function to modify existing payroll.'
+            })
+        
+        # Get all active staff members
+        staff_members = Staff.objects.filter(user__is_active=True)
+        
+        if not staff_members.exists():
+            return JsonResponse({'success': False, 'error': 'No active staff members found'})
+        
+        # Generate payroll entries
+        created_count = 0
+        for staff in staff_members:
+            # Use basic salary or default amount
+            base_salary = getattr(staff, 'basic_salary', 50000)  # Default basic salary
+            
+            payroll, created = Payroll.objects.get_or_create(
+                staff=staff,
+                month=month,
+                year=year,
+                defaults={
+                    'amount': base_salary,
+                    'basic_salary': base_salary,
+                    'allowances': 0,
+                    'deductions': 0,
+                    'paid': False
+                }
+            )
+            
+            if created:
+                created_count += 1
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Payroll generated successfully for {month} {year}. Created {created_count} payroll entries.',
+            'created_count': created_count,
+            'total_staff': staff_members.count()
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Error generating payroll: {str(e)}'
+        }, status=500)
+
+@login_required
+@staff_required
+def dashboard_stats_ajax(request):
+    """AJAX endpoint for live dashboard statistics"""
+    from .models import TuitionFee, Payment, Expense, Payroll
+    from django.db.models import Sum, Count
+    from datetime import datetime, timedelta
+    
+    try:
+        today = timezone.now().date()
+        current_month_start = today.replace(day=1)
+        current_year_start = today.replace(month=1, day=1)
+        
+        # Revenue this month
+        monthly_revenue = Payment.objects.filter(
+            payment_date__gte=current_month_start,
+            payment_date__lte=today
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        # Expenses this month
+        monthly_expenses = Expense.objects.filter(
+            date__gte=current_month_start,
+            date__lte=today
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        # Outstanding fees
+        outstanding_fees = TuitionFee.objects.filter(
+            status__in=['unpaid', 'partial']
+        ).aggregate(total=Sum('amount_due'))['total'] or 0
+        
+        # Recent transactions count
+        recent_payments = Payment.objects.filter(
+            payment_date__gte=today - timedelta(days=7)
+        ).count()
+        
+        # Monthly trend data (last 6 months)
+        monthly_trends = []
+        for i in range(5, -1, -1):
+            month_date = (current_month_start - timedelta(days=32*i)).replace(day=1)
+            month_end = (month_date + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+            
+            month_revenue = Payment.objects.filter(
+                payment_date__gte=month_date,
+                payment_date__lte=month_end
+            ).aggregate(total=Sum('amount'))['total'] or 0
+            
+            month_expenses = Expense.objects.filter(
+                date__gte=month_date,
+                date__lte=month_end
+            ).aggregate(total=Sum('amount'))['total'] or 0
+            
+            monthly_trends.append({
+                'month': month_date.strftime('%b'),
+                'revenue': float(month_revenue),
+                'expenses': float(month_expenses)
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'stats': {
+                'monthly_revenue': float(monthly_revenue),
+                'monthly_expenses': float(monthly_expenses),
+                'outstanding_fees': float(outstanding_fees),
+                'recent_payments': recent_payments,
+                'monthly_trends': monthly_trends,
+                'last_updated': today.strftime('%Y-%m-%d %H:%M:%S')
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Error fetching dashboard stats: {str(e)}'
+        }, status=500)
