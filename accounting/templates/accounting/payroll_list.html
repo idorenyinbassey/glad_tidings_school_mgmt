@@ -250,7 +250,7 @@
                                         <td>
                                             <div class="action-buttons">
                                                 {% if not payroll.paid %}
-                                                    <button class="btn btn-sm btn-success" onclick="markAsPaid({{ payroll.id }})" title="Mark as Paid">
+                                                    <button class="btn btn-sm btn-success mark-paid-btn" data-payroll-id="{{ payroll.id }}" title="Mark as Paid">
                                                         <i class="fas fa-check"></i>
                                                     </button>
                                                 {% endif %}
@@ -363,6 +363,17 @@
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Event delegation for mark as paid buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.mark-paid-btn')) {
+            const button = e.target.closest('.mark-paid-btn');
+            const payrollId = button.getAttribute('data-payroll-id');
+            markAsPaid(payrollId);
+        }
+    });
+});
+
 function generatePayroll() {
     // This would typically send an AJAX request to generate payroll
     alert('Payroll generation feature will be implemented in the backend.');
