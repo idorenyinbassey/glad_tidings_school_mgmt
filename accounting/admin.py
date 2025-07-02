@@ -122,8 +122,8 @@ class PayrollAdmin(ImportExportModelAdmin):
 @admin.register(Expense)
 class ExpenseAdmin(ImportExportModelAdmin):
     resource_class = ExpenseResource
-    list_display = ('description', 'amount', 'date', 'category', 'vendor', 'created_by')
-    search_fields = ('description', 'category', 'vendor', 'receipt_number')
+    list_display = ('description', 'amount', 'date', 'category', 'created_by')
+    search_fields = ('description', 'category')
     list_filter = ('category', 'date', 'created_by')
     readonly_fields = ('created_at', 'created_by')
 
