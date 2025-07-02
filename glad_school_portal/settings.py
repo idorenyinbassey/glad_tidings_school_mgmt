@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'django_filters',  # Advanced filtering
     'corsheaders',  # CORS headers
     'django_extensions',  # Django extensions
+    'import_export',  # Import/Export functionality
     # Project apps
     'core',  # Added core app
     'users',  # Added users app

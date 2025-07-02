@@ -1,0 +1,6 @@
+username,first_name,last_name,email,user_type,admission_number,class,staff_id,department,position,is_active
+john.doe,John,Doe,john.doe@school.com,student,STU001,Grade 10,,,Teacher,True
+jane.smith,Jane,Smith,jane.smith@school.com,staff,,,,Mathematics,Teacher,True
+mike.wilson,Mike,Wilson,mike.wilson@school.com,student,STU002,Grade 9,,,Student,True
+sarah.jones,Sarah,Jones,sarah.jones@school.com,staff,,,,English,Teacher,True
+admin.user,Admin,User,admin@school.com,admin,,,,,Administrator,True
