@@ -20,6 +20,7 @@
 6. [Notification System](#notification-system)
 7. [Profile Management](#profile-management)
 8. [Technical Information](#technical-information)
+9. [Result Management System](#result-management-system)
 
 ## Introduction
 
@@ -175,7 +176,63 @@ IT Support personnel have access to:
 - Resource monitoring
 
 ## Academic Features
+// ...existing content...
 
+## Result Management System 📊
+
+The Result Management System provides comprehensive tools for managing student academic results from entry to publication.
+
+### For Teachers/Staff:
+
+#### Result Entry
+1. Navigate to **Results → Enter Results**
+2. Select academic session and term
+3. Choose class and student
+4. Select subject and assessment type
+5. Enter score and teacher's remark
+6. Save the result
+
+#### Bulk Upload
+1. Go to **Results → Bulk Upload**
+2. Download CSV template
+3. Fill in student results data
+4. Upload the completed CSV file
+5. Review and confirm uploads
+
+#### Result Compilation
+1. Access **Results → Compile Results**
+2. Select session, term, and class
+3. Choose subjects to compile
+4. Generate term result sheets
+5. Review and publish results
+
+### For Students:
+
+#### Viewing Results
+1. Login to student dashboard
+2. View recent results overview
+3. Click **"View My Results"** for detailed view
+4. Filter by session, term, or subject
+5. See individual assessments and compiled grades
+
+#### Printing Result Sheets
+1. Go to **"My Result Sheets"**
+2. Select academic session and term
+3. View compiled result sheet
+4. Download PDF for printing
+5. Print professional result card
+
+### Result Management Features:
+- ✅ Individual result entry with validation
+- ✅ Bulk CSV upload with error checking
+- ✅ Automatic grade calculation and positioning
+- ✅ Teacher remarks and feedback system
+- ✅ Professional PDF result sheets
+- ✅ Student self-service result viewing
+- ✅ Real-time statistics and analytics
+- ✅ Role-based access control
+
+// ...existing content continues...
 ### Class Timetable
 
 The timetable system allows for scheduling classes with the following information:
@@ -377,3 +434,57 @@ python -m pytest core/tests/test_urls.py
 ```
 
 For more details on testing practices and organization, see the [Testing Guidelines](./testing_guidelines.md) document.
+
+## Result Management System 📊
+
+The Result Management System provides comprehensive tools for managing student academic results from entry to publication.
+
+### For Teachers/Staff:
+
+#### Result Entry
+1. Navigate to **Results → Enter Results**
+2. Select academic session and term
+3. Choose class and student
+4. Select subject and assessment type
+5. Enter score and teacher's remark
+6. Save the result
+
+#### Bulk Upload
+1. Go to **Results → Bulk Upload**
+2. Download CSV template
+3. Fill in student results data
+4. Upload the completed CSV file
+5. Review and confirm uploads
+
+#### Result Compilation
+1. Access **Results → Compile Results**
+2. Select session, term, and class
+3. Choose subjects to compile
+4. Generate term result sheets
+5. Review and publish results
+
+### For Students:
+
+#### Viewing Results
+1. Login to student dashboard
+2. View recent results overview
+3. Click **"View My Results"** for detailed view
+4. Filter by session, term, or subject
+5. See individual assessments and compiled grades
+
+#### Printing Result Sheets
+1. Go to **"My Result Sheets"**
+2. Select academic session and term
+3. View compiled result sheet
+4. Download PDF for printing
+5. Print professional result card
+
+### Result Management Features:
+- ✅ Individual result entry with validation
+- ✅ Bulk CSV upload with error checking
+- ✅ Automatic grade calculation and positioning
+- ✅ Teacher remarks and feedback system
+- ✅ Professional PDF result sheets
+- ✅ Student self-service result viewing
+- ✅ Real-time statistics and analytics
+- ✅ Role-based access control
