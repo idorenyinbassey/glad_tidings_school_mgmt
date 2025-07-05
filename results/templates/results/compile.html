@@ -1,0 +1,145 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Compile Results{% endblock %}
+
+{% block extra_css %}
+<style>
+    .compile-card {
+        background: white;
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 5px;
+        padding: 10px 25px;
+    }
+    .progress-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2">🧮 Compile Results</h1>
+                <a href="{% url 'results:result_dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="compile-card">
+                <h4 class="mb-4"><i class="fas fa-calculator"></i> Compile Term Results</h4>
+                
+                <form method="post" id="compileForm">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="session">Academic Session *</label>
+                                <select class="form-control" id="session" name="session" required>
+                                    {% for session in sessions %}
+                                    <option value="{{ session.id }}" {% if session.is_current %}selected{% endif %}>
+                                        {{ session.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="term">Academic Term *</label>
+                                <select class="form-control" id="term" name="term" required>
+                                    {% for term in terms %}
+                                    <option value="{{ term.id }}" {% if term.is_current %}selected{% endif %}>
+                                        {{ term.get_name_display }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="student_class">Class (Optional)</label>
+                                <select class="form-control" id="student_class" name="student_class">
+                                    <option value="">All Classes</option>
+                                    {% for class in classes %}
+                                    <option value="{{ class.id }}">{{ class.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="subject">Subject (Optional)</label>
+                                <select class="form-control" id="subject" name="subject">
+                                    <option value="">All Subjects</option>
+                                    {% for subject in subjects %}
+                                    <option value="{{ subject.id }}">{{ subject.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-cogs"></i> Start Compilation
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            {% if compilation_results %}
+            <div class="compile-card">
+                <h5><i class="fas fa-check-circle text-success"></i> Compilation Results</h5>
+                <div class="alert alert-success">
+                    <strong>Success!</strong> Compiled {{ compilation_results.count }} results.
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="progress-card">
+                <h5><i class="fas fa-info-circle"></i> Compilation Process</h5>
+                <ol class="small">
+                    <li>Calculates weighted averages for each student/subject</li>
+                    <li>Assigns grades based on percentage scores</li>
+                    <li>Determines class positions</li>
+                    <li>Creates term result records</li>
+                    <li>Updates result sheets</li>
+                </ol>
+            </div>
+
+            <div class="progress-card">
+                <h5><i class="fas fa-chart-bar"></i> Grading Scale</h5>
+                <small class="text-muted">
+                    <strong>A:</strong> 80-100% (Excellent)<br>
+                    <strong>B:</strong> 70-79% (Very Good)<br>
+                    <strong>C:</strong> 60-69% (Good)<br>
+                    <strong>D:</strong> 45-59% (Pass)<br>
+                    <strong>F:</strong> 0-44% (Fail)
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

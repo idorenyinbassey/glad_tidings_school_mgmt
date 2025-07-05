@@ -1,0 +1,36 @@
+<!-- Result Management Navigation -->
+<div class="row mb-4">
+    <div class="col-12">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light rounded">
+            <a class="navbar-brand" href="{% url 'results:result_dashboard' %}">
+                <i class="fas fa-chart-line"></i> Results
+            </a>
+            
+            <div class="navbar-nav">
+                <a class="nav-link {% if request.resolver_match.url_name == 'result_dashboard' %}active{% endif %}" 
+                   href="{% url 'results:result_dashboard' %}">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a class="nav-link {% if request.resolver_match.url_name == 'result_entry' %}active{% endif %}" 
+                   href="{% url 'results:result_entry' %}">
+                    <i class="fas fa-edit"></i> Entry
+                </a>
+                <a class="nav-link {% if request.resolver_match.url_name == 'bulk_upload_results' %}active{% endif %}" 
+                   href="{% url 'results:bulk_upload_results' %}">
+                    <i class="fas fa-upload"></i> Bulk Upload
+                </a>
+                <a class="nav-link {% if request.resolver_match.url_name == 'compile_results' %}active{% endif %}" 
+                   href="{% url 'results:compile_results' %}">
+                    <i class="fas fa-calculator"></i> Compile
+                </a>
+                <a class="nav-link {% if request.resolver_match.url_name == 'result_sheets' %}active{% endif %}" 
+                   href="{% url 'results:result_sheets' %}">
+                    <i class="fas fa-file-alt"></i> Sheets
+                </a>
+                <a class="nav-link" href="{% url 'results:download_csv_template' %}">
+                    <i class="fas fa-download"></i> Template
+                </a>
+            </div>
+        </nav>
+    </div>
+</div>

@@ -1,0 +1,241 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Result Sheets{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sheets-card {
+        background: white;
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 5px;
+        padding: 8px 16px;
+    }
+    .table-responsive {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .badge-published {
+        background-color: #28a745;
+    }
+    .badge-draft {
+        background-color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2">📄 Result Sheets</h1>
+                <a href="{% url 'results:result_dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="sheets-card">
+                <form method="get" class="row align-items-end">
+                    <div class="col-md-3">
+                        <label for="session">Session</label>
+                        <select class="form-control" name="session" id="session">
+                            <option value="">All Sessions</option>
+                            {% for session in sessions %}
+                            <option value="{{ session.id }}" {% if request.GET.session == session.id|stringformat:"s" %}selected{% endif %}>
+                                {{ session.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="term">Term</label>
+                        <select class="form-control" name="term" id="term">
+                            <option value="">All Terms</option>
+                            {% for term in terms %}
+                            <option value="{{ term.id }}" {% if request.GET.term == term.id|stringformat:"s" %}selected{% endif %}>
+                                {{ term.get_name_display }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="class">Class</label>
+                        <select class="form-control" name="class" id="class">
+                            <option value="">All Classes</option>
+                            {% for class in classes %}
+                            <option value="{{ class.id }}" {% if request.GET.class == class.id|stringformat:"s" %}selected{% endif %}>
+                                {{ class.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter"></i> Filter
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Result Sheets Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="sheets-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5><i class="fas fa-list"></i> Result Sheets ({{ result_sheets.count }} total)</h5>
+                    <div>
+                        <a href="{% url 'results:compile_results' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-plus"></i> Generate New Sheets
+                        </a>
+                    </div>
+                </div>
+
+                {% if result_sheets %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Student</th>
+                                <th>Class</th>
+                                <th>Session</th>
+                                <th>Term</th>
+                                <th>Overall %</th>
+                                <th>Grade</th>
+                                <th>Position</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sheet in result_sheets %}
+                            <tr>
+                                <td>
+                                    <strong>{{ sheet.student.user.get_full_name }}</strong><br>
+                                    <small class="text-muted">{{ sheet.student.admission_number }}</small>
+                                </td>
+                                <td>{{ sheet.student_class.name }}</td>
+                                <td>{{ sheet.session.name }}</td>
+                                <td>{{ sheet.term.get_name_display }}</td>
+                                <td>
+                                    <strong>{{ sheet.overall_percentage|floatformat:1 }}%</strong>
+                                </td>
+                                <td>
+                                    <span class="badge badge-{% if sheet.overall_grade == 'A' %}success{% elif sheet.overall_grade == 'B' %}info{% elif sheet.overall_grade == 'C' %}warning{% elif sheet.overall_grade == 'D' %}secondary{% else %}danger{% endif %}">
+                                        {{ sheet.overall_grade }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if sheet.position_in_class %}
+                                        {{ sheet.position_in_class }}/{{ sheet.total_students }}
+                                    {% else %}
+                                        --
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if sheet.is_published %}
+                                        <span class="badge badge-published">Published</span>
+                                    {% else %}
+                                        <span class="badge badge-draft">Draft</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'results:print_result_sheet' sheet.id %}" class="btn btn-outline-primary" title="Print">
+                                            <i class="fas fa-print"></i>
+                                        </a>
+                                        {% if not sheet.is_published %}
+                                        <button class="btn btn-outline-success" onclick="publishSheet({{ sheet.id }})" title="Publish">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <nav aria-label="Result sheets pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for page_num in page_obj.paginator.page_range %}
+                        <li class="page-item {% if page_num == page_obj.number %}active{% endif %}">
+                            <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+                        </li>
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Result Sheets Found</h5>
+                    <p class="text-muted">Generate result sheets by compiling results first.</p>
+                    <a href="{% url 'results:compile_results' %}" class="btn btn-primary">
+                        <i class="fas fa-cogs"></i> Compile Results
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function publishSheet(sheetId) {
+    if (confirm('Are you sure you want to publish this result sheet? This action cannot be undone.')) {
+        // Add AJAX call to publish the sheet
+        fetch(`/results/publish-sheet/${sheetId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error publishing result sheet: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error);
+        });
+    }
+}
+</script>
+{% endblock %}

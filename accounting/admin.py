@@ -61,7 +61,7 @@ class TuitionFeeAdmin(ImportExportModelAdmin):
         balance = obj.amount_due - obj.amount_paid
         if balance <= 0:
             return format_html('<span style="color: green;">₦0.00</span>')
-        return format_html('<span style="color: red;">₦{:,.2f}</span>', balance)
+        return format_html('<span style="color: red;">₦{}</span>', f'{balance:,.2f}')
     remaining_balance.short_description = 'Remaining Balance'
 
 
@@ -90,7 +90,7 @@ class PaymentAdmin(ImportExportModelAdmin):
         remaining = obj.tuition_fee.amount_due - obj.tuition_fee.amount_paid
         if remaining <= 0:
             return format_html('<span style="color: green;">Fully Paid</span>')
-        return format_html('<span style="color: orange;">₦{:,.2f}</span>', remaining)
+        return format_html('<span style="color: orange;">₦{}</span>', f'{remaining:,.2f}')
     remaining_after_payment.short_description = 'Balance After Payment'
 
     def save_model(self, request, obj, form, change):

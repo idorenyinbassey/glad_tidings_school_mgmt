@@ -1,0 +1,204 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Result Management Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+        color: white;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .stats-card h3 {
+        margin: 0;
+        font-size: 2.5rem;
+        font-weight: bold;
+    }
+    .stats-card p {
+        margin: 5px 0 0 0;
+        opacity: 0.9;
+    }
+    .action-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-left: 4px solid #667eea;
+    }
+    .action-card h4 {
+        color: #333;
+        margin-bottom: 10px;
+    }
+    .btn-action {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 5px;
+        color: white;
+        padding: 10px 20px;
+        text-decoration: none;
+        display: inline-block;
+        margin: 5px 5px 5px 0;
+        transition: transform 0.2s;
+    }
+    .btn-action:hover {
+        transform: translateY(-2px);
+        color: white;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {% include 'results/includes/navigation.html' %}
+    
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h2 mb-4">📊 Result Management Dashboard</h1>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <h3>{{ stats.total_students }}</h3>
+                <p>Total Students</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <h3>{{ stats.total_subjects }}</h3>
+                <p>Active Subjects</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <h3>{{ stats.total_classes }}</h3>
+                <p>Active Classes</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <h3>{{ stats.results_entered }}</h3>
+                <p>Results Entered</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Session/Term Info -->
+    {% if current_session and current_term %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <h5><i class="fas fa-calendar"></i> Current Academic Period</h5>
+                <p class="mb-0"><strong>Session:</strong> {{ current_session.name }} | <strong>Term:</strong> {{ current_term.get_name_display }}</p>
+                <small>{{ current_term.start_date }} - {{ current_term.end_date }}</small>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="action-card">
+                <h4><i class="fas fa-edit"></i> Result Entry</h4>
+                <p>Enter individual student results for assessments and exams.</p>
+                <a href="{% url 'results:result_entry' %}" class="btn-action">
+                    <i class="fas fa-plus"></i> Enter Results
+                </a>
+                <a href="{% url 'results:bulk_upload_results' %}" class="btn-action">
+                    <i class="fas fa-upload"></i> Bulk Upload
+                </a>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="action-card">
+                <h4><i class="fas fa-calculator"></i> Result Compilation</h4>
+                <p>Compile term results and generate result sheets.</p>
+                <a href="{% url 'results:compile_results' %}" class="btn-action">
+                    <i class="fas fa-cogs"></i> Compile Results
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="action-card">
+                <h4><i class="fas fa-file-alt"></i> Result Sheets</h4>
+                <p>View, manage and print student result sheets.</p>
+                <a href="{% url 'results:result_sheets' %}" class="btn-action">
+                    <i class="fas fa-list"></i> View Sheets
+                </a>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="action-card">
+                <h4><i class="fas fa-download"></i> Templates & Reports</h4>
+                <p>Download CSV templates and generate reports.</p>
+                <a href="{% url 'results:download_csv_template' %}" class="btn-action">
+                    <i class="fas fa-file-csv"></i> CSV Template
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    {% if recent_results %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-clock"></i> Recent Result Entries</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Subject</th>
+                                    <th>Assessment</th>
+                                    <th>Score</th>
+                                    <th>Entered By</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in recent_results %}
+                                <tr>
+                                    <td>{{ result.student.user.get_full_name }}</td>
+                                    <td>{{ result.subject.name }}</td>
+                                    <td>{{ result.assessment.name }}</td>
+                                    <td>{{ result.score }}/{{ result.assessment.max_score }}</td>
+                                    <td>{{ result.entered_by.get_full_name|default:"System" }}</td>
+                                    <td>{{ result.entered_at|date:"M d, H:i" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Add any dashboard-specific JavaScript here
+    console.log('Result Management Dashboard loaded');
+});
+</script>
+{% endblock %}

@@ -62,3 +62,25 @@ def admin_required(view_func):
             
         return view_func(request, *args, **kwargs)
     return _wrapped_view
+
+
+def role_required(allowed_roles):
+    """
+    Decorator for views that checks that the user is logged in and has one of the allowed roles.
+    Usage: @role_required(['staff', 'admin'])
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            user = request.user
+            if not user.is_authenticated:
+                return redirect('login')
+            
+            # Check if user has one of the allowed roles or is superuser
+            if not (hasattr(user, 'role') and user.role in allowed_roles) and not user.is_superuser:
+                error_msg = f"You don't have permission to access this page. Required roles: {', '.join(allowed_roles)}"
+                return HttpResponse(error_msg, status=403)
+                
+            return view_func(request, *args, **kwargs)
+        return _wrapped_view
+    return decorator

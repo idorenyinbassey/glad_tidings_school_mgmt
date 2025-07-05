@@ -82,6 +82,7 @@ INSTALLED_APPS = [
     'itsupport',  # Added itsupport app
     'assignments',  # Added assignments app
     'cbt',  # Added cbt app
+    'results',  # Added results app
 ]
 
 # Remove None values from INSTALLED_APPS

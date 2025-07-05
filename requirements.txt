@@ -12,6 +12,7 @@ tzdata  # Timezone database
 djangorestframework  # Django REST framework for APIs
 django-filter  # Advanced filtering for Django and DRF
 django-cors-headers  # Cross-Origin Resource Sharing headers
+django-import-export  # Import/export functionality for Django admin
 
 # Database adapters
 psycopg2-binary  # PostgreSQL adapter
@@ -47,3 +48,5 @@ pluggy  # Plugin management system used by pytest
 
 # Production dependencies
 whitenoise  # Static file serving for Django
+
+

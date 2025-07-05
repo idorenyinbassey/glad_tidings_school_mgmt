@@ -1,0 +1,227 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Bulk Upload Results{% endblock %}
+
+{% block extra_css %}
+<style>
+    .upload-card {
+        background: white;
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+    .drop-zone {
+        border: 2px dashed #667eea;
+        border-radius: 10px;
+        padding: 40px;
+        text-align: center;
+        background: #f8f9ff;
+        transition: all 0.3s ease;
+    }
+    .drop-zone:hover {
+        border-color: #764ba2;
+        background: #f0f2ff;
+    }
+    .drop-zone.dragover {
+        border-color: #28a745;
+        background: #f0fff4;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 5px;
+        padding: 10px 25px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2">📤 Bulk Upload Results</h1>
+                <a href="{% url 'results:result_dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="upload-card">
+                <h4 class="mb-4"><i class="fas fa-cloud-upload-alt"></i> Upload CSV File</h4>
+                
+                <form method="post" enctype="multipart/form-data" id="uploadForm">
+                    {% csrf_token %}
+                    <div class="drop-zone" id="dropZone">
+                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                        <h5>Drag and drop your CSV file here</h5>
+                        <p class="text-muted">or</p>
+                        <input type="file" class="form-control-file d-none" id="csvFile" name="csv_file" accept=".csv">
+                        <button type="button" class="btn btn-outline-primary" onclick="$('#csvFile').click()">
+                            <i class="fas fa-folder-open"></i> Choose File
+                        </button>
+                    </div>
+
+                    <div class="mt-4" id="fileInfo" style="display: none;">
+                        <h6>Selected File:</h6>
+                        <p id="fileName" class="text-primary"></p>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="session">Academic Session *</label>
+                                <select class="form-control" id="session" name="session" required>
+                                    {% for session in sessions %}
+                                    <option value="{{ session.id }}" {% if session.is_current %}selected{% endif %}>
+                                        {{ session.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="term">Academic Term *</label>
+                                <select class="form-control" id="term" name="term" required>
+                                    {% for term in terms %}
+                                    <option value="{{ term.id }}" {% if term.is_current %}selected{% endif %}>
+                                        {{ term.get_name_display }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <button type="submit" class="btn btn-primary" id="uploadBtn" disabled>
+                            <i class="fas fa-upload"></i> Upload Results
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            {% if upload_results %}
+            <div class="upload-card">
+                <h5><i class="fas fa-check-circle text-success"></i> Upload Results</h5>
+                <div class="alert alert-success">
+                    <strong>Success!</strong> {{ upload_results.success_count }} results uploaded successfully.
+                </div>
+                {% if upload_results.errors %}
+                <div class="alert alert-warning">
+                    <strong>Errors:</strong>
+                    <ul class="mb-0">
+                        {% for error in upload_results.errors %}
+                        <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="upload-card">
+                <h5><i class="fas fa-info-circle"></i> Instructions</h5>
+                <ol class="small">
+                    <li>Download the CSV template below</li>
+                    <li>Fill in the student results data</li>
+                    <li>Make sure all required fields are filled</li>
+                    <li>Upload the completed CSV file</li>
+                </ol>
+                
+                <a href="{% url 'results:download_csv_template' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-download"></i> Download Template
+                </a>
+            </div>
+
+            <div class="upload-card">
+                <h5><i class="fas fa-table"></i> CSV Format</h5>
+                <small class="text-muted">
+                    <strong>Required Columns:</strong><br>
+                    • student_admission_number<br>
+                    • subject_code<br>
+                    • assessment_name<br>
+                    • score<br>
+                    • class_name<br>
+                    • remarks (optional)
+                </small>
+            </div>
+
+            <div class="upload-card">
+                <h5><i class="fas fa-exclamation-triangle"></i> Important Notes</h5>
+                <small class="text-muted">
+                    • Scores must not exceed assessment max score<br>
+                    • Student admission numbers must exist<br>
+                    • Subject codes must be valid<br>
+                    • Assessment names must exist<br>
+                    • Duplicate entries will be updated
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    const dropZone = $('#dropZone');
+    const fileInput = $('#csvFile');
+    const uploadBtn = $('#uploadBtn');
+    const fileInfo = $('#fileInfo');
+    const fileName = $('#fileName');
+
+    // File input change
+    fileInput.change(function() {
+        const file = this.files[0];
+        if (file) {
+            fileName.text(file.name);
+            fileInfo.show();
+            uploadBtn.prop('disabled', false);
+        } else {
+            fileInfo.hide();
+            uploadBtn.prop('disabled', true);
+        }
+    });
+
+    // Drag and drop functionality
+    dropZone.on('dragover', function(e) {
+        e.preventDefault();
+        $(this).addClass('dragover');
+    });
+
+    dropZone.on('dragleave', function(e) {
+        e.preventDefault();
+        $(this).removeClass('dragover');
+    });
+
+    dropZone.on('drop', function(e) {
+        e.preventDefault();
+        $(this).removeClass('dragover');
+        
+        const files = e.originalEvent.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput[0].files = files;
+            fileInput.trigger('change');
+        }
+    });
+
+    // Form validation
+    $('#uploadForm').submit(function(e) {
+        if (!fileInput[0].files.length) {
+            e.preventDefault();
+            alert('Please select a CSV file to upload.');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

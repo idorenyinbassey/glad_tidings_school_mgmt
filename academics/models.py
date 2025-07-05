@@ -25,12 +25,11 @@ class ClassTimetable(models.Model):
     class Meta:
         unique_together = ('class_name', 'day_of_week', 'period')
         indexes = [
-            models.Index(fields=['class_name', 'day_of_week']),  # For faster timetable filtering
+            models.Index(fields=['class_name', 'day_of_week']),
         ]
         
     def clean(self):
         from django.core.exceptions import ValidationError
-        # Ensure end_time is after start_time
         if self.start_time and self.end_time and self.start_time >= self.end_time:
             raise ValidationError("End time must be after start time")
             
@@ -77,17 +76,14 @@ class ELibraryResource(models.Model):
         return self.title
         
     def save(self, *args, **kwargs):
-        # Update file size when saving
         if self.file and hasattr(self.file, 'size'):
             self.file_size = self.file.size
         super().save(*args, **kwargs)
         
     def get_file_size_display(self):
-        """Return human-readable file size"""
         if not self.file_size:
             return "Unknown"
             
-        # Convert bytes to appropriate unit
         size_bytes = self.file_size
         for unit in ['B', 'KB', 'MB', 'GB']:
             if size_bytes < 1024 or unit == 'GB':
@@ -131,21 +127,19 @@ class Announcement(models.Model):
     is_active = models.BooleanField(default=True)
     publish_date = models.DateTimeField(null=True, blank=True, help_text="When this announcement should become visible")
     expiry_date = models.DateTimeField(null=True, blank=True, help_text="When this announcement should no longer be visible")
-    attachment = models.FileField(upload_to='announcements/', blank=True, null=True)
     
     class Meta:
         ordering = ['-priority', '-created_at']
         indexes = [
-            models.Index(fields=['is_active', '-priority', '-created_at']),
-            models.Index(fields=['audience', 'is_active']),
+            models.Index(fields=['audience', 'is_active', '-created_at']),
+            models.Index(fields=['priority', '-created_at']),
         ]
 
     def __str__(self):
-        return self.title
-        
+        return f"{self.title} ({self.get_audience_display()})"
+    
     @property
     def is_expired(self):
-        """Check if announcement is expired"""
         from django.utils import timezone
         if self.expiry_date:
             return timezone.now() > self.expiry_date
@@ -153,7 +147,6 @@ class Announcement(models.Model):
     
     @property
     def is_published(self):
-        """Check if announcement is published"""
         from django.utils import timezone
         if self.publish_date:
             return timezone.now() >= self.publish_date

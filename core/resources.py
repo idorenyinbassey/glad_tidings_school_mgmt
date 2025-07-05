@@ -1,5 +1,4 @@
-from import_export import resources, fields, widgets
-from import_export.widgets import ForeignKeyWidget
+from import_export import resources, fields
 from django.contrib.auth.models import User, Group
 from students.models import StudentProfile
 from staff.models import StaffProfile
@@ -162,144 +161,58 @@ class UserResource(resources.ModelResource):
                 staff_group, _ = Group.objects.get_or_create(name='Staff')
                 instance.groups.add(staff_group)
 
-    def before_save_instance(self, instance, using_transactions, dry_run, **kwargs):
-        """Set custom attributes before saving"""
-        row = kwargs.get('row', {})
-
-        # Store custom attributes for use in after_save_instance
-        instance.user_type = row.get('user_type')
-        instance.admission_number = row.get('admission_number')
-        instance.student_class = row.get('class')
-        instance.staff_id = row.get('staff_id')
-        instance.department = row.get('department')
-        instance.position = row.get('position')
-
-        # Set a default password if not provided
-        if not instance.password:
-            instance.set_password('defaultpassword123')
-
 
 class TuitionFeeResource(resources.ModelResource):
     """Resource for importing/exporting Tuition Fees"""
-
-    student = fields.Field(
-        column_name='student_username',
-        attribute='student',
-        widget=ForeignKeyWidget(StudentProfile, 'user__username')
-    )
-
-    student_name = fields.Field(
-        column_name='student_name',
-        attribute='student__user__first_name',
-        readonly=True
-    )
-
-    student_admission = fields.Field(
-        column_name='admission_number',
-        attribute='student__admission_number',
-        readonly=True
-    )
-
+    
     class Meta:
         model = TuitionFee
         fields = (
-            'id', 'student', 'student_name', 'student_admission',
-            'session', 'term', 'amount_due', 'amount_paid',
-            'status', 'due_date', 'paid_date'
+            'id', 'student__user__username', 'student__user__first_name',
+            'student__user__last_name', 'student__admission_number',
+            'academic_year', 'term', 'total_amount', 'amount_paid',
+            'balance', 'due_date', 'created_at'
         )
         export_order = fields
-        import_id_fields = ('student', 'session', 'term')
-
-    def dehydrate_student_name(self, tuition_fee):
-        """Export student full name"""
-        return tuition_fee.student.user.get_full_name()
 
 
 class PayrollResource(resources.ModelResource):
-    """Resource for importing/exporting Payroll"""
-
-    staff = fields.Field(
-        column_name='staff_username',
-        attribute='staff',
-        widget=ForeignKeyWidget(StaffProfile, 'user__username')
-    )
-
-    staff_name = fields.Field(
-        column_name='staff_name',
-        attribute='staff__user__first_name',
-        readonly=True
-    )
-
-    staff_id_field = fields.Field(
-        column_name='staff_id',
-        attribute='staff__staff_id',
-        readonly=True
-    )
-
+    """Resource for importing/exporting Payroll records"""
+    
     class Meta:
         model = Payroll
         fields = (
-            'id', 'staff', 'staff_name', 'staff_id_field',
-            'month', 'year', 'amount', 'paid', 'paid_date'
+            'id', 'staff__user__username', 'staff__user__first_name',
+            'staff__user__last_name', 'staff__staff_id', 'staff__department',
+            'month', 'year', 'basic_salary', 'allowances', 'deductions',
+            'gross_salary', 'net_salary', 'created_at'
         )
         export_order = fields
-        import_id_fields = ('staff', 'month', 'year')
-
-    def dehydrate_staff_name(self, payroll):
-        """Export staff full name"""
-        return payroll.staff.user.get_full_name()
 
 
 class PaymentResource(resources.ModelResource):
-    """Resource for importing/exporting Payments"""
-
-    tuition_fee = fields.Field(
-        column_name='tuition_fee_id',
-        attribute='tuition_fee',
-        widget=ForeignKeyWidget(TuitionFee, 'id')
-    )
-
-    student_name = fields.Field(
-        column_name='student_name',
-        attribute='tuition_fee__student__user__first_name',
-        readonly=True
-    )
-
+    """Resource for importing/exporting Payment records"""
+    
     class Meta:
         model = Payment
         fields = (
-            'id', 'tuition_fee', 'student_name', 'amount',
-            'payment_date', 'method', 'receipt_number',
-            'reference', 'notes'
+            'id', 'tuition_fee__student__user__username',
+            'tuition_fee__student__user__first_name',
+            'tuition_fee__student__user__last_name',
+            'tuition_fee__student__admission_number',
+            'amount', 'payment_method', 'reference_number',
+            'payment_date', 'created_at'
         )
         export_order = fields
-        import_id_fields = ('receipt_number',)
-
-    def dehydrate_student_name(self, payment):
-        """Export student full name"""
-        return payment.tuition_fee.student.user.get_full_name()
 
 
 class ExpenseResource(resources.ModelResource):
-    """Resource for importing/exporting Expenses"""
-
-    created_by_username = fields.Field(
-        column_name='created_by_username',
-        attribute='created_by__username',
-        readonly=True
-    )
-
+    """Resource for importing/exporting Expense records"""
+    
     class Meta:
         model = Expense
         fields = (
-            'id', 'description', 'amount', 'date', 'category',
-            'receipt_number', 'vendor', 'notes', 'created_by_username'
+            'id', 'category', 'description', 'amount',
+            'date', 'created_by__username', 'created_at'
         )
         export_order = fields
-        import_id_fields = ('receipt_number',)
-
-    def dehydrate_created_by_username(self, expense):
-        """Export creator username"""
-        if expense.created_by:
-            return expense.created_by.username
-        return None

@@ -50,25 +50,26 @@
                             <h5 class="card-title mb-0">Recent Results</h5>
                         </div>
                         <div class="card-body">
+                            {% if recent_results %}
                             <div class="list-group">
+                                {% for result in recent_results %}
                                 <a href="{% url 'students:results' %}" class="list-group-item list-group-item-action">
                                     <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1">Science Quiz</h6>
-                                        <span class="badge bg-success">90%</span>
+                                        <h6 class="mb-1">{{ result.subject.name }} - {{ result.assessment.name }}</h6>
+                                        <span class="badge bg-{% if result.percentage >= 80 %}success{% elif result.percentage >= 70 %}warning{% else %}danger{% endif %}">{{ result.percentage|floatformat:0 }}%</span>
                                     </div>
-                                    <p class="mb-1 text-muted">Ecology and Environment</p>
+                                    <p class="mb-1 text-muted">{{ result.score }}/{{ result.assessment.max_score }} marks</p>
+                                    <small class="text-muted">{{ result.entered_at|date:"M d, Y" }}</small>
                                 </a>
-                                <a href="{% url 'students:results' %}" class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1">History Test</h6>
-                                        <span class="badge bg-warning">75%</span>
-                                    </div>
-                                    <p class="mb-1 text-muted">World War II</p>
-                                </a>
+                                {% endfor %}
                             </div>
+                            {% else %}
+                            <p class="text-muted text-center">No recent results available</p>
+                            {% endif %}
                         </div>
                         <div class="card-footer bg-transparent border-top-0">
                             <a href="{% url 'students:results' %}" class="btn btn-sm btn-outline-success">View all results</a>
+                            <a href="{% url 'students:result_sheets' %}" class="btn btn-sm btn-outline-primary">Print Result Sheets</a>
                         </div>
                     </div>
                 </div>
@@ -180,6 +181,12 @@
                         </div>
                         <div class="card-body">
                             <div class="d-grid gap-2">
+                                <a href="{% url 'students:results' %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-chart-line me-2"></i>My Results
+                                </a>
+                                <a href="{% url 'students:result_sheets' %}" class="btn btn-outline-success">
+                                    <i class="fas fa-file-alt me-2"></i>Result Sheets
+                                </a>
                                 <a href="{% url 'academics:elibrary' %}" class="btn btn-outline-secondary">
                                     <i class="fas fa-book me-2"></i>E-Library
                                 </a>

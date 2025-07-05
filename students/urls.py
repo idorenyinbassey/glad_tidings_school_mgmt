@@ -8,4 +8,6 @@ urlpatterns = [
     path('assignments/', views.assignments, name='assignments'),
     path('results/', views.results, name='results'),
     path('attendance/', views.attendance, name='attendance'),
+    path('result-sheets/', views.result_sheets, name='result_sheets'),
+    path('print-result/<int:session_id>/<int:term_id>/', views.print_result_sheet, name='print_result_sheet'),
 ]

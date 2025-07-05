@@ -1,0 +1,163 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Student Results{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-chart-line text-primary me-2"></i>My Results</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Results</li>
+                    </ol>
+                </nav>
+            </div>
+
+            <!-- Results Summary Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <i class="fas fa-trophy text-warning fa-2x mb-2"></i>
+                            <h5 class="card-title">Overall Grade</h5>
+                            <h3 class="text-primary">A-</h3>
+                            <small class="text-muted">Current Term</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <i class="fas fa-percentage text-success fa-2x mb-2"></i>
+                            <h5 class="card-title">Average Score</h5>
+                            <h3 class="text-success">85.5%</h3>
+                            <small class="text-muted">All Subjects</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <i class="fas fa-chart-line text-info fa-2x mb-2"></i>
+                            <h5 class="card-title">Class Position</h5>
+                            <h3 class="text-info">3rd</h3>
+                            <small class="text-muted">Out of 45</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <i class="fas fa-book text-purple fa-2x mb-2"></i>
+                            <h5 class="card-title">Subjects</h5>
+                            <h3 class="text-purple">8</h3>
+                            <small class="text-muted">Total Subjects</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-table me-2"></i>Current Term Results</h5>
+                </div>
+                <div class="card-body">
+                    {% if results %}
+                        <!-- Results will be displayed here when available -->
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Subject</th>
+                                        <th>Test Score</th>
+                                        <th>Exam Score</th>
+                                        <th>Total Score</th>
+                                        <th>Grade</th>
+                                        <th>Position</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for result in results %}
+                                    <tr>
+                                        <td>{{ result.subject }}</td>
+                                        <td>{{ result.test_score }}</td>
+                                        <td>{{ result.exam_score }}</td>
+                                        <td><strong>{{ result.total_score }}</strong></td>
+                                        <td>
+                                            <span class="badge bg-{% if result.grade == 'A' %}success{% elif result.grade == 'B' %}primary{% elif result.grade == 'C' %}warning{% else %}danger{% endif %}">
+                                                {{ result.grade }}
+                                            </span>
+                                        </td>
+                                        <td>{{ result.position }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Results Available</h5>
+                            <p class="text-muted">Your academic results will appear here once they are published by your teachers.</p>
+                            <div class="mt-4">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Note:</strong> This is a demo page. In a real system, your actual academic results would be displayed here.
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-download fa-2x text-primary mb-2"></i>
+                            <h6>Download Results</h6>
+                            <button class="btn btn-outline-primary btn-sm" disabled>
+                                <i class="fas fa-file-pdf me-1"></i>Download PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-chart-bar fa-2x text-success mb-2"></i>
+                            <h6>Performance Analytics</h6>
+                            <button class="btn btn-outline-success btn-sm" disabled>
+                                <i class="fas fa-chart-line me-1"></i>View Analytics
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.text-purple {
+    color: #6f42c1 !important;
+}
+.bg-purple {
+    background-color: #6f42c1 !important;
+}
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: box-shadow 0.3s ease;
+}
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+</style>
+{% endblock %}

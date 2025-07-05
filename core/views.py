@@ -30,8 +30,10 @@ def portal(request):
 def dashboard(request):
     user = request.user
     role = getattr(user, 'role', None)
+    
     if role == 'student':
-        return render(request, 'core/dashboard_student.html')
+        context = get_student_dashboard_context(user)
+        return render(request, 'core/dashboard_student.html', context)
     elif role == 'staff':
         return render(request, 'core/dashboard_staff.html')
     elif role == 'admin':
@@ -251,3 +253,36 @@ def get_admin_dashboard_context():
         'chart_data': json.dumps(chart_data),
         'last_updated': today.strftime('%B %d, %Y')
     }
+
+
+def get_student_dashboard_context(user):
+    """Get live data for student dashboard"""
+    try:
+        from students.models import StudentProfile
+        from results.models import StudentResult
+        
+        # Get student profile
+        student_profile = StudentProfile.objects.get(user=user)
+        
+        # Get recent results (last 5)
+        recent_results = StudentResult.objects.filter(
+            student=student_profile
+        ).select_related(
+            'subject', 'assessment', 'session', 'term'
+        ).order_by('-entered_at')[:5]
+        
+        return {
+            'student_profile': student_profile,
+            'recent_results': recent_results,
+        }
+    except StudentProfile.DoesNotExist:
+        return {
+            'student_profile': None,
+            'recent_results': [],
+        }
+    except Exception as e:
+        logger.error(f"Error getting student dashboard context: {e}")
+        return {
+            'student_profile': None,
+            'recent_results': [],
+        }

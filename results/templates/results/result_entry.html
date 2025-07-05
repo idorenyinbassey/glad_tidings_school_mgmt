@@ -1,0 +1,262 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Result Entry{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        background: white;
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 5px;
+        padding: 10px 25px;
+    }
+    .btn-secondary {
+        background: #6c757d;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 25px;
+    }
+    .form-group label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+    }
+    .form-control {
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        padding: 10px 15px;
+    }
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2">📝 Result Entry</h1>
+                <a href="{% url 'results:result_dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="form-card">
+                <h4 class="mb-4"><i class="fas fa-edit"></i> Enter Student Result</h4>
+                
+                <form method="post" id="resultForm">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="session">Academic Session *</label>
+                                <select class="form-control" id="session" name="session" required>
+                                    <option value="">Select Session</option>
+                                    {% for session in sessions %}
+                                    <option value="{{ session.id }}" {% if session.is_current %}selected{% endif %}>
+                                        {{ session.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="term">Academic Term *</label>
+                                <select class="form-control" id="term" name="term" required>
+                                    <option value="">Select Term</option>
+                                    {% for term in terms %}
+                                    <option value="{{ term.id }}" {% if term.is_current %}selected{% endif %}>
+                                        {{ term.get_name_display }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="student_class">Class *</label>
+                                <select class="form-control" id="student_class" name="student_class" required>
+                                    <option value="">Select Class</option>
+                                    {% for class in classes %}
+                                    <option value="{{ class.id }}">{{ class.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="student">Student *</label>
+                                <select class="form-control" id="student" name="student" required>
+                                    <option value="">Select Student</option>
+                                    <!-- Students will be loaded via AJAX -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="subject">Subject *</label>
+                                <select class="form-control" id="subject" name="subject" required>
+                                    <option value="">Select Subject</option>
+                                    {% for subject in subjects %}
+                                    <option value="{{ subject.id }}">{{ subject.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="assessment">Assessment *</label>
+                                <select class="form-control" id="assessment" name="assessment" required>
+                                    <option value="">Select Assessment</option>
+                                    {% for assessment in assessments %}
+                                    <option value="{{ assessment.id }}" data-max-score="{{ assessment.max_score }}">
+                                        {{ assessment.name }} ({{ assessment.max_score }} marks)
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="score">Score *</label>
+                                <input type="number" class="form-control" id="score" name="score" 
+                                       min="0" step="0.1" required>
+                                <small class="form-text text-muted" id="scoreHelp">
+                                    Enter score (max: <span id="maxScore">--</span>)
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="remarks">Teacher's Remark</label>
+                                <textarea class="form-control" id="remarks" name="remarks" rows="3" 
+                                          placeholder="Optional teacher's remark about student performance"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Result
+                        </button>
+                        <button type="reset" class="btn btn-secondary ml-2">
+                            <i class="fas fa-undo"></i> Reset Form
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="form-card">
+                <h5><i class="fas fa-info-circle"></i> Quick Actions</h5>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'results:bulk_upload_results' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-upload"></i> Bulk Upload Results
+                    </a>
+                    <a href="{% url 'results:download_csv_template' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-file-csv"></i> Download CSV Template
+                    </a>
+                    <a href="{% url 'results:compile_results' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-calculator"></i> Compile Results
+                    </a>
+                    <a href="{% url 'results:result_sheets' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-file-alt"></i> View Result Sheets
+                    </a>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <h5><i class="fas fa-chart-bar"></i> Assessment Types</h5>
+                <small class="text-muted">
+                    <strong>Standard Weights:</strong><br>
+                    • First CA: 15%<br>
+                    • Second CA: 15%<br>
+                    • Third CA: 20%<br>
+                    • Examination: 50%<br>
+                    • Assignment: 5%<br>
+                    • Project: 10%
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Update max score when assessment changes
+    $('#assessment').change(function() {
+        const maxScore = $(this).find(':selected').data('max-score');
+        if (maxScore) {
+            $('#maxScore').text(maxScore);
+            $('#score').attr('max', maxScore);
+        } else {
+            $('#maxScore').text('--');
+            $('#score').removeAttr('max');
+        }
+    });
+
+    // Load students when class changes
+    $('#student_class').change(function() {
+        const classId = $(this).val();
+        if (classId) {
+            $.ajax({
+                url: '{% url "results:get_class_students" %}',
+                data: {'class_id': classId},
+                success: function(data) {
+                    const studentSelect = $('#student');
+                    studentSelect.empty().append('<option value="">Select Student</option>');
+                    data.students.forEach(function(student) {
+                        studentSelect.append(`<option value="${student.id}">${student.name}</option>`);
+                    });
+                },
+                error: function() {
+                    alert('Error loading students. Please try again.');
+                }
+            });
+        } else {
+            $('#student').empty().append('<option value="">Select Student</option>');
+        }
+    });
+
+    // Form validation
+    $('#resultForm').submit(function(e) {
+        const score = parseFloat($('#score').val());
+        const maxScore = parseFloat($('#assessment').find(':selected').data('max-score'));
+        
+        if (score > maxScore) {
+            e.preventDefault();
+            alert(`Score cannot exceed ${maxScore} marks.`);
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}
