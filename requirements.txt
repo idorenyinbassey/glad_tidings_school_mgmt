@@ -40,6 +40,9 @@ Pygments  # Syntax highlighting for test output
 psutil  # System and process utilities
 requests  # HTTP library for external requests
 
+# PDF generation
+reportlab  # PDF generation library for reports and documents
+
 # Development tools
 colorama  # Colored terminal output
 iniconfig  # INI file parser used by pytest
@@ -48,5 +51,49 @@ pluggy  # Plugin management system used by pytest
 
 # Production dependencies
 whitenoise  # Static file serving for Django
+
+# Enhanced accounting dependencies
+openpyxl  # Excel file handling for financial reports
+xlsxwriter  # Excel report generation
+pandas  # Data analysis and manipulation
+numpy  # Numerical computing
+matplotlib  # Chart generation for financial reports
+seaborn  # Statistical data visualization
+plotly  # Interactive charts and dashboards
+python-dateutil  # Extended date utilities
+celery  # Asynchronous task processing for bulk operations
+redis  # Message broker for Celery
+
+# Financial and accounting libraries
+decimal  # High precision decimal arithmetic (built-in, but good to document)
+python-decouple  # Environment variable management
+
+# Advanced Excel and CSV processing
+tablib  # Dataset manipulation library
+csvkit  # CSV processing utilities
+
+# Enhanced PDF generation
+weasyprint  # HTML/CSS to PDF converter for better reports
+xhtml2pdf  # Alternative PDF generation
+
+# Bank integration and financial data
+requests-oauthlib  # OAuth for bank API integration
+cryptography  # Encryption for sensitive financial data
+
+# Data validation and cleaning
+cerberus  # Data validation
+jsonschema  # JSON schema validation
+
+# Enhanced logging and monitoring
+structlog  # Structured logging
+sentry-sdk  # Error tracking and performance monitoring
+
+# Backup and data management
+django-dbbackup  # Database backup functionality
+boto3  # AWS integration for cloud backups
+
+# Advanced financial calculations
+sympy  # Symbolic mathematics for complex calculations
+python-money  # Money and currency handling
 
 
