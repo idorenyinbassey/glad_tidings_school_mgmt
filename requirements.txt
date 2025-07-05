@@ -64,9 +64,8 @@ python-dateutil  # Extended date utilities
 celery  # Asynchronous task processing for bulk operations
 redis  # Message broker for Celery
 
-# Financial and accounting libraries
-decimal  # High precision decimal arithmetic (built-in, but good to document)
-python-decouple  # Environment variable management
+# Environment variable management
+python-decouple  
 
 # Advanced Excel and CSV processing
 tablib  # Dataset manipulation library
