@@ -1,0 +1,931 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Financial Reports - Glad Tidings School Portal{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+    .report-card {
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .report-card:hover {
+        box-shadow: 0 4px 8px rg        html += '<p class="h4">₦' + (data.total_expenses || 0).toLocaleString() + '</p>';a(0,0,0,0.15);
+        transform: translateY(-2px);
+    }
+    .loading-spinner {
+        display: none;
+    }
+    .metric-value {
+        font-size: 2rem;
+        font-weight: bold;
+        line-height: 1.2;
+    }
+    .metric-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    .btn-generate {
+        background: linear-gradient(45deg, #007bff, #0056b3);
+        border: none;
+        transition: all 0.3s ease;
+    }
+    .btn-generate:hover {
+        background: linear-gradient(45deg, #0056b3, #004085);
+        transform: translateY(-1px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">
+                    <i class="fas fa-chart-line me-3"></i>Financial Reports
+                </h2>
+                <a href="{% url 'accounting:home' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Back To Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Generation Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card report-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Generate New Report</h5>
+                </div>
+                <div class="card-body">
+                    <form id="reportForm" action="#" method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Report Type -->
+                        <div class="mb-4">
+                            <label for="reportType" class="form-label fw-bold">
+                                <i class="fas fa-file-alt me-2"></i>Report Type
+                            </label>
+                            <select class="form-select" id="reportType" name="report_type" required>
+                                <option value="">Select a report type...</option>
+                                {% for report_type in report_types %}
+                                <option value="{{ report_type.value }}" data-description="{{ report_type.description }}">
+                                    {{ report_type.label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text" id="reportDescription"></div>
+                        </div>
+
+                        <!-- Time Period -->
+                        <div class="mb-4">
+                            <label for="timePeriod" class="form-label fw-bold">
+                                <i class="fas fa-calendar me-2"></i>Time Period
+                            </label>
+                            <select class="form-select" id="timePeriod" name="time_period" required>
+                                <option value="">Select time period...</option>
+                                {% for period in time_periods %}
+                                <option value="{{ period.value }}">{{ period.label }} - {{ period.description }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Custom Date Range (hidden by default) -->
+                        <div id="customDateRange" class="mb-4" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="startDate" class="form-label">Start Date</label>
+                                    <input type="date" class="form-control" id="startDate" name="start_date">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="endDate" class="form-label">End Date</label>
+                                    <input type="date" class="form-control" id="endDate" name="end_date">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Generate Button -->
+                        <div class="d-grid">
+                            <button type="button" class="btn btn-primary btn-generate" onclick="handleGenerateReport()">
+                                <i class="fas fa-play me-2"></i>
+                                Generate Report
+                                <div class="spinner-border spinner-border-sm ms-2 loading-spinner d-none" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Loading Spinner -->
+                    <div class="text-center mt-3 loading-spinner" id="loadingSpinner" style="display: none !important;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Generating report...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Generating your report...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Statistics -->
+        <div class="col-lg-4">
+            <div class="card report-card">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Report Statistics</h5>
+                    <button type="button" class="btn btn-sm btn-light" onclick="refreshStatistics()" title="Refresh Statistics">
+                        <i class="fas fa-refresh"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="statisticsContent">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="metric-value text-primary">{{ total_reports }}</div>
+                                <div class="metric-label">Total Reports</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="metric-value text-success">{{ reports_this_month }}</div>
+                                <div class="metric-label">This Month</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="statisticsLoading" class="text-center" style="display: none;">
+                        <div class="spinner-border spinner-border-sm" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Buttons (hidden by default) -->
+    <div class="row mt-3 d-none" id="exportButtons">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Export Options</h6>
+                    <div class="btn-group" role="group">
+                        {% for format in export_formats %}
+                        <button type="button" class="btn btn-outline-secondary" onclick="exportReport('{{ format.value }}')">
+                            <i class="{{ format.icon }} me-1"></i>{{ format.label }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Results -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card report-card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Report Results</h5>
+                </div>
+                <div class="card-body">
+                    <div id="reportContent">
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-chart-bar fa-3x mb-3"></i>
+                            <h5>No Report Generated</h5>
+                            <p>Select a report type and time period above to generate your first report.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Reports -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card report-card">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Reports</h5>
+                    <button type="button" class="btn btn-sm btn-light" onclick="refreshRecentReports()" title="Refresh Recent Reports">
+                        <i class="fas fa-refresh"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="recentReports">
+                        <div class="text-center text-muted">
+                            <i class="fas fa-clock fa-2x mb-2"></i>
+                            <p>Loading recent reports...</p>
+                        </div>
+                    </div>
+                    <div id="recentReportsLoading" class="text-center" style="display: none;">
+                        <div class="spinner-border spinner-border-sm" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+      <script>
+    console.log('SCRIPT BLOCK IS LOADING!'); // Test if script loads
+    
+    // Define the URL for AJAX requests
+    const GENERATE_REPORT_URL = "{% url 'accounting:generate_report_ajax' %}";
+    
+    console.log('Report URL defined:', GENERATE_REPORT_URL);
+
+    // Simple test function
+    window.testMe = function() {
+        alert('Test function works!');
+    };
+
+    function handleGenerateReport() {
+        console.log('Generate report button clicked');
+        
+        // Get form data
+        var form = document.getElementById('reportForm');
+        var formData = new FormData(form);
+
+        // Debug: Log form data
+        console.log('Form data being sent:');
+        for (let [key, value] of formData.entries()) {
+            console.log(key + ': ' + value);
+        }
+
+        // Show loading
+        var loadingSpinner = document.getElementById('loadingSpinner');
+        if (loadingSpinner) {
+            loadingSpinner.style.display = 'block';
+            loadingSpinner.style.visibility = 'visible';
+            loadingSpinner.classList.remove('d-none');
+        }
+        
+        // Clear previous results
+        var reportContent = document.getElementById('reportContent');
+        if (reportContent) reportContent.innerHTML = '';
+        
+        // Make AJAX request
+        fetch(GENERATE_REPORT_URL, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Report response:', data);
+            
+            // Hide loading
+            if (loadingSpinner) {
+                loadingSpinner.style.display = 'none';
+                loadingSpinner.style.visibility = 'hidden';
+                loadingSpinner.classList.add('d-none');
+            }
+            
+            if (data.success) {
+                console.log('Report generated successfully!');
+                console.log('Report data:', data.report_data);
+                console.log('Report type from response:', data.report_data ? data.report_data.report_type : 'Not found');
+                console.log('Period name from response:', data.report_data ? data.report_data.period_name : 'Not found');
+                
+                // Store report data and ID globally for export function
+                window.currentReportData = data.report_data;
+                window.currentReportId = data.report_id;
+                
+                // Display the report data
+                if (reportContent && data.report_data) {
+                    displayReportData(data.report_data);
+                } else {
+                    if (reportContent) {
+                        reportContent.innerHTML = '<div class="alert alert-success">Report generated successfully!</div>';
+                    }
+                }
+                
+                // Show export buttons
+                var exportButtons = document.getElementById('exportButtons');
+                if (exportButtons) {
+                    exportButtons.classList.remove('d-none');
+                }
+                
+                // Refresh recent reports and statistics after successful generation
+                refreshRecentReports();
+                refreshStatistics();
+            } else {
+                console.error('Report generation failed:', data.error);
+                if (reportContent) {
+                    reportContent.innerHTML = '<div class="alert alert-danger">Report generation failed: ' + (data.error || 'Unknown error') + '</div>';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('AJAX error:', error);
+            alert('Network error: ' + error.message);
+            
+            // Hide loading
+            if (loadingSpinner) {
+                loadingSpinner.style.display = 'none';
+                loadingSpinner.style.visibility = 'hidden';
+                loadingSpinner.classList.add('d-none');
+            }
+        });
+    }
+
+    function displayReportData(reportData) {
+        console.log('Displaying report data:', reportData);
+        
+        // Defensive check
+        if (!reportData) {
+            console.error('reportData is undefined or null');
+            return;
+        }
+        
+        console.log('Report type in display function:', reportData.report_type);
+        console.log('Period name in display function:', reportData.period_name);
+        
+        var reportContent = document.getElementById('reportContent');
+        if (!reportContent) {
+            console.error('reportContent element not found');
+            return;
+        }
+        
+        var html = '<div class="report-results">';
+        
+        // Report header
+        html += '<div class="alert alert-info mb-4">';
+        html += '<h5 class="mb-2"><i class="fas fa-chart-bar me-2"></i>Report Generated Successfully</h5>';
+        html += '<p><strong>Type:</strong> ' + (reportData.report_type || 'N/A').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + '</p>';
+        html += '<p><strong>Period:</strong> ' + (reportData.period_name || 'N/A') + '</p>';
+        html += '<p class="mb-0"><strong>Generated:</strong> ' + (reportData.generated_at || new Date().toLocaleString()) + '</p>';
+        html += '</div>';
+        
+        // Report type specific display with defensive checks
+        try {
+            if (reportData.report_type === 'income_statement') {
+                html += displayIncomeStatement(reportData);
+            } else if (reportData.report_type === 'fee_collection') {
+                html += displayFeeCollectionReport(reportData);
+            } else if (reportData.report_type === 'balance_sheet') {
+                html += displayBalanceSheet(reportData);
+            } else if (reportData.report_type === 'cash_flow') {
+                html += displayCashFlow(reportData);
+            } else if (reportData.report_type === 'expense_report') {
+                html += displayExpenseReport(reportData);
+            } else {
+                // Generic display for unknown report types
+                html += '<div class="alert alert-warning">Report data structure not recognized for display.</div>';
+                html += '<pre>' + JSON.stringify(reportData, null, 2) + '</pre>';
+            }
+        } catch (error) {
+            console.error('Error displaying report:', error);
+            html += '<div class="alert alert-danger">Error displaying report data: ' + error.message + '</div>';
+            html += '<pre>' + JSON.stringify(reportData, null, 2) + '</pre>';
+        }
+        
+        html += '</div>';
+        reportContent.innerHTML = html;
+    }
+    
+    function displayIncomeStatement(data) {
+        if (!data) {
+            console.error('displayIncomeStatement: data is undefined');
+            return '<div class="alert alert-danger">Error: Report data is missing</div>';
+        }
+        
+        var html = '<div class="row">';
+        
+        // Revenue section
+        html += '<div class="col-md-6 mb-4">';
+        html += '<div class="card">';
+        html += '<div class="card-header bg-success text-white">';
+        html += '<h6 class="mb-0"><i class="fas fa-dollar-sign me-2"></i>Revenue</h6>';
+        html += '</div>';
+        html += '<div class="card-body">';
+        html += '<p class="h4 text-success">₦' + (data.total_revenue || 0).toLocaleString() + '</p>';
+        
+        if (data.revenue_by_method && data.revenue_by_method.length > 0) {
+            html += '<h6 class="mt-3">Revenue by Method:</h6>';
+            html += '<ul class="list-unstyled">';
+            data.revenue_by_method.forEach(function(method) {
+                html += '<li><strong>' + (method.method || 'Unknown') + ':</strong> ₦' + (method.total || 0).toLocaleString() + ' (' + (method.count || 0) + ' payments)</li>';
+            });
+            html += '</ul>';
+        }
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+        
+        // Expenses section
+        html += '<div class="col-md-6 mb-4">';
+        html += '<div class="card">';
+        html += '<div class="card-header bg-danger text-white">';
+        html += '<h6 class="mb-0"><i class="fas fa-credit-card me-2"></i>Expenses</h6>';
+        html += '</div>';
+        html += '<div class="card-body">';
+        html += '<p class="h4 text-danger">₦' + (data.total_expenses || 0).toLocaleString() + '</p>';
+        
+        if (data.expense_categories) {
+            html += '<h6 class="mt-3">Expenses by Category:</h6>';
+            html += '<ul class="list-unstyled">';
+            for (var category in data.expense_categories) {
+                html += '<li><strong>' + category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + ':</strong> ₦' + (data.expense_categories[category] || 0).toLocaleString() + '</li>';
+            }
+            html += '</ul>';
+        }
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+        
+        // Net Income section
+        html += '<div class="col-12">';
+        html += '<div class="card">';
+        html += '<div class="card-header bg-primary text-white">';
+        html += '<h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Net Income</h6>';
+        html += '</div>';
+        html += '<div class="card-body text-center">';
+        var netIncome = data.net_income || 0;
+        var netIncomeClass = netIncome >= 0 ? 'text-success' : 'text-danger';
+        html += '<p class="h3 ' + netIncomeClass + '">₦' + netIncome.toLocaleString() + '</p>';
+        if (data.profit_margin !== undefined) {
+            html += '<p class="text-muted">Profit Margin: ' + (data.profit_margin || 0).toFixed(2) + '%</p>';
+        }
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+        
+        html += '</div>';
+        return html;
+    }
+    
+    function displayFeeCollectionReport(data) {
+        if (!data) {
+            console.error('displayFeeCollectionReport: data is undefined');
+            return '<div class="alert alert-danger">Error: Report data is missing</div>';
+        }
+        
+        var html = '<div class="row">';
+        
+        // Summary stats
+        html += '<div class="col-md-3 mb-3">';
+        html += '<div class="card text-center">';
+        html += '<div class="card-body">';
+        html += '<h5 class="card-title text-primary">Total Due</h5>';
+        html += '<p class="h4">₦' + (data.total_due || 0).toLocaleString() + '</p>';
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+        
+        html += '<div class="col-md-3 mb-3">';
+        html += '<div class="card text-center">';
+        html += '<div class="card-body">';
+        html += '<h5 class="card-title text-success">Total Paid</h5>';
+        html += '<p class="h4">₦' + (data.total_paid || 0).toLocaleString() + '</p>';
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+        
+        html += '<div class="col-md-3 mb-3">';
+        html += '<div class="card text-center">';
+        html += '<div class="card-body">';
+        html += '<h5 class="card-title text-warning">Outstanding</h5>';
+        html += '<p class="h4">₦' + (data.total_outstanding || 0).toLocaleString() + '</p>';
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+        
+        html += '<div class="col-md-3 mb-3">';
+        html += '<div class="card text-center">';
+        html += '<div class="card-body">';
+        html += '<h5 class="card-title text-info">Collection Rate</h5>';
+        html += '<p class="h4">' + (data.collection_rate || 0).toFixed(1) + '%</p>';
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+        
+        html += '</div>';
+        return html;
+    }
+    
+    function displayBalanceSheet(data) {
+        return '<div class="alert alert-info">Balance Sheet display coming soon...</div>';
+    }
+    
+    function displayCashFlow(data) {
+        return '<div class="alert alert-info">Cash Flow display coming soon...</div>';
+    }
+    
+    function displayExpenseReport(data) {
+        if (!data) {
+            console.error('displayExpenseReport: data is undefined');
+            return '<div class="alert alert-danger">Error: Report data is missing</div>';
+        }
+        
+        var html = '<div class="row">';
+        
+        // Summary stats row
+        html += '<div class="col-md-3 mb-3">';
+        html += '<div class="card text-center">';
+        html += '<div class="card-body">';
+        html += '<h5 class="card-title text-danger">Total Expenses</h5>';
+        html += '<p class="h4">$' + (data.total_expenses || 0).toLocaleString() + '</p>';
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+        
+        html += '<div class="col-md-3 mb-3">';
+        html += '<div class="card text-center">';
+        html += '<div class="card-body">';
+        html += '<h5 class="card-title text-info">Transactions</h5>';
+        html += '<p class="h4">' + (data.total_transactions || 0).toLocaleString() + '</p>';
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+        
+        html += '<div class="col-md-3 mb-3">';
+        html += '<div class="card text-center">';
+        html += '<div class="card-body">';
+        html += '<h5 class="card-title text-warning">Average Transaction</h5>';
+        html += '<p class="h4">₦' + (data.average_transaction || 0).toLocaleString() + '</p>';
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+        
+        html += '<div class="col-md-3 mb-3">';
+        html += '<div class="card text-center">';
+        html += '<div class="card-body">';
+        html += '<h5 class="card-title text-success">Unique Vendors</h5>';
+        html += '<p class="h4">' + (data.unique_vendors || 0) + '</p>';
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+        
+        // Expenses by category
+        if (data.expenses_by_category && data.expenses_by_category.length > 0) {
+            html += '<div class="col-md-6 mb-4">';
+            html += '<div class="card">';
+            html += '<div class="card-header bg-primary text-white">';
+            html += '<h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Expenses by Category</h6>';
+            html += '</div>';
+            html += '<div class="card-body">';
+            data.expenses_by_category.forEach(function(category) {
+                var percentage = parseFloat(category.percentage || 0);
+                var amount = parseFloat(category.amount || 0);
+                html += '<div class="d-flex justify-content-between align-items-center mb-2">';
+                html += '<span><strong>' + (category.name || 'Unknown') + '</strong></span>';
+                html += '<span>₦' + amount.toLocaleString() + ' (' + percentage.toFixed(1) + '%)</span>';
+                html += '</div>';
+                html += '<div class="progress mb-3" style="height: 6px;">';
+                html += '<div class="progress-bar" style="width: ' + percentage + '%"></div>';
+                html += '</div>';
+            });
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+        }
+        
+        // Payment methods
+        if (data.payment_methods && data.payment_methods.length > 0) {
+            html += '<div class="col-md-6 mb-4">';
+            html += '<div class="card">';
+            html += '<div class="card-header bg-secondary text-white">';
+            html += '<h6 class="mb-0"><i class="fas fa-credit-card me-2"></i>Payment Methods</h6>';
+            html += '</div>';
+            html += '<div class="card-body">';
+            data.payment_methods.forEach(function(method) {
+                var percentage = parseFloat(method.percentage || 0);
+                var amount = parseFloat(method.amount || 0);
+                html += '<div class="d-flex justify-content-between align-items-center mb-2">';
+                html += '<span><strong>' + (method.method || 'Unknown') + '</strong></span>';
+                html += '<span>₦' + amount.toLocaleString() + ' (' + percentage.toFixed(1) + '%)</span>';
+                html += '</div>';
+            });
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+        }
+        
+        // Top vendors
+        if (data.top_vendors && data.top_vendors.length > 0) {
+            html += '<div class="col-md-6 mb-4">';
+            html += '<div class="card">';
+            html += '<div class="card-header bg-success text-white">';
+            html += '<h6 class="mb-0"><i class="fas fa-building me-2"></i>Top Vendors</h6>';
+            html += '</div>';
+            html += '<div class="card-body">';
+            html += '<div class="table-responsive">';
+            html += '<table class="table table-sm">';
+            html += '<thead><tr><th>Vendor</th><th>Total</th><th>Count</th><th>Average</th></tr></thead>';
+            html += '<tbody>';
+            data.top_vendors.slice(0, 5).forEach(function(vendor) {
+                html += '<tr>';
+                html += '<td>' + (vendor.name || 'Unknown') + '</td>';
+                html += '<td>₦' + (parseFloat(vendor.total || 0)).toLocaleString() + '</td>';
+                html += '<td>' + (vendor.count || 0) + '</td>';
+                html += '<td>₦' + (parseFloat(vendor.average || 0)).toLocaleString() + '</td>';
+                html += '</tr>';
+            });
+            html += '</tbody>';
+            html += '</table>';
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+        }
+        
+        // Monthly trend
+        if (data.monthly_trend && data.monthly_trend.length > 0) {
+            html += '<div class="col-md-6 mb-4">';
+            html += '<div class="card">';
+            html += '<div class="card-header bg-info text-white">';
+            html += '<h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Monthly Trend</h6>';
+            html += '</div>';
+            html += '<div class="card-body">';
+            html += '<div class="table-responsive">';
+            html += '<table class="table table-sm">';
+            html += '<thead><tr><th>Month</th><th>Total</th><th>Count</th><th>Change</th></tr></thead>';
+            html += '<tbody>';
+            data.monthly_trend.forEach(function(month) {
+                var change = parseFloat(month.change || 0);
+                var changeClass = change >= 0 ? 'text-danger' : 'text-success';
+                var changeIcon = change >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                html += '<tr>';
+                html += '<td>' + (month.month_name || 'Unknown') + '</td>';
+                html += '<td>₦' + (parseFloat(month.total || 0)).toLocaleString() + '</td>';
+                html += '<td>' + (month.count || 0) + '</td>';
+                html += '<td class="' + changeClass + '">';
+                html += '<i class="fas ' + changeIcon + ' me-1"></i>' + Math.abs(change).toFixed(1) + '%';
+                html += '</td>';
+                html += '</tr>';
+            });
+            html += '</tbody>';
+            html += '</table>';
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+        }
+        
+        html += '</div>';
+        return html;
+    }
+                if (reportData.summary.hasOwnProperty(key)) {
+                    var value = reportData.summary[key];
+                    var formattedValue = typeof value === 'number' ? value.toLocaleString() : value;
+                    html += '<div class="col-md-3 mb-3">';
+                    html += '<div class="card bg-light">';
+                    html += '<div class="card-body text-center">';
+                    html += '<h4 class="card-title text-primary">' + formattedValue + '</h4>';
+                    html += '<p class="card-text">' + key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + '</p>';
+                    html += '</div></div></div>';
+                }
+    
+    // Export report function
+    function exportReport(format) {
+        console.log('Exporting report in format:', format);
+        console.log('Current report ID:', window.currentReportId);
+        console.log('Current report data:', window.currentReportData);
+        
+        // Check if we have a current report
+        if (!window.currentReportData || !window.currentReportId) {
+            alert('Please generate a report first before exporting.');
+            console.error('Missing report data or ID:', {
+                reportData: !!window.currentReportData,
+                reportId: !!window.currentReportId
+            });
+            return;
+        }
+        
+        // Use the export endpoint 
+        var exportUrl = '{% url "accounting:export_report_ajax" %}';
+        
+        // Create a temporary form to submit the export request
+        var exportForm = document.createElement('form');
+        exportForm.method = 'POST';
+        exportForm.action = exportUrl;
+        exportForm.style.display = 'none';
+        
+        // Add CSRF token
+        var csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        exportForm.appendChild(csrfInput);
+        
+        // Add report ID
+        var reportIdInput = document.createElement('input');
+        reportIdInput.type = 'hidden';
+        reportIdInput.name = 'reportId';
+        reportIdInput.value = window.currentReportId;
+        exportForm.appendChild(reportIdInput);
+        
+        // Add format
+        var formatInput = document.createElement('input');
+        formatInput.type = 'hidden';
+        formatInput.name = 'format';
+        formatInput.value = format;
+        exportForm.appendChild(formatInput);
+        
+        // Submit form via AJAX to get download URL
+        var formData = new FormData(exportForm);
+        
+        fetch(exportUrl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Open download URL in new window/tab
+                window.open(data.download_url, '_blank');
+                console.log('Export successful:', data.message);
+            } else {
+                alert('Export failed: ' + data.error);
+                console.error('Export failed:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Export request failed:', error);
+            alert('Export request failed. Please try again.');
+        });
+        
+        console.log('Export request submitted for format:', format);
+    }
+    
+    // Refresh statistics function
+    function refreshStatistics() {
+        console.log('Refreshing statistics...');
+        
+        var loadingElement = document.getElementById('statisticsLoading');
+        var contentElement = document.getElementById('statisticsContent');
+        
+        // Show loading
+        if (loadingElement) {
+            loadingElement.style.display = 'block';
+        }
+        if (contentElement) {
+            contentElement.style.display = 'none';
+        }
+        
+        // Make AJAX request to get updated statistics
+        fetch('{% url "accounting:dashboard_stats_ajax" %}', {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Statistics response:', data);
+            
+            // Hide loading
+            if (loadingElement) {
+                loadingElement.style.display = 'none';
+            }
+            if (contentElement) {
+                contentElement.style.display = 'block';
+            }
+            
+            if (data.success) {
+                // Update statistics display
+                var html = '<div class="row text-center">';
+                html += '<div class="col-6">';
+                html += '<div class="metric-value text-primary">' + (data.total_reports || 0) + '</div>';
+                html += '<div class="metric-label">Total Reports</div>';
+                html += '</div>';
+                html += '<div class="col-6">';
+                html += '<div class="metric-value text-success">' + (data.reports_this_month || 0) + '</div>';
+                html += '<div class="metric-label">This Month</div>';
+                html += '</div>';
+                html += '</div>';
+                
+                if (contentElement) {
+                    contentElement.innerHTML = html;
+                }
+            } else {
+                console.error('Failed to refresh statistics:', data.error);
+                if (contentElement) {
+                    contentElement.innerHTML = '<div class="text-center text-danger">Failed to load statistics</div>';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Statistics refresh failed:', error);
+            
+            // Hide loading
+            if (loadingElement) {
+                loadingElement.style.display = 'none';
+            }
+            if (contentElement) {
+                contentElement.style.display = 'block';
+                contentElement.innerHTML = '<div class="text-center text-danger">Failed to load statistics</div>';
+            }
+        });
+    }
+    
+    // Refresh recent reports function
+    function refreshRecentReports() {
+        console.log('Refreshing recent reports...');
+        
+        var loadingElement = document.getElementById('recentReportsLoading');
+        var contentElement = document.getElementById('recentReports');
+        
+        // Show loading
+        if (loadingElement) {
+            loadingElement.style.display = 'block';
+        }
+        if (contentElement) {
+            contentElement.style.display = 'none';
+        }
+        
+        // Make AJAX request to get recent reports
+        fetch('{% url "accounting:recent_reports_ajax" %}', {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Recent reports response:', data);
+            
+            // Hide loading
+            if (loadingElement) {
+                loadingElement.style.display = 'none';
+            }
+            if (contentElement) {
+                contentElement.style.display = 'block';
+            }
+            
+            if (data.success) {
+                displayRecentReports(data.reports);
+            } else {
+                console.error('Failed to refresh recent reports:', data.error);
+                if (contentElement) {
+                    contentElement.innerHTML = '<div class="text-center text-danger">Failed to load recent reports</div>';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Recent reports refresh failed:', error);
+            
+            // Hide loading
+            if (loadingElement) {
+                loadingElement.style.display = 'none';
+            }
+            if (contentElement) {
+                contentElement.style.display = 'block';
+                contentElement.innerHTML = '<div class="text-center text-danger">Failed to load recent reports</div>';
+            }
+        });
+    }
+    
+    // Display recent reports function
+    function displayRecentReports(reports) {
+        var contentElement = document.getElementById('recentReports');
+        if (!contentElement) return;
+        
+        if (!reports || reports.length === 0) {
+            contentElement.innerHTML = '<div class="text-center text-muted"><i class="fas fa-clock fa-2x mb-2"></i><p>No recent reports. Generate your first report above!</p></div>';
+            return;
+        }
+        
+        var html = '<div class="list-group list-group-flush">';
+        
+        reports.forEach(function(report) {
+            var reportTypeDisplay = (report.report_type || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            var createdAt = new Date(report.created_at).toLocaleDateString() + ' ' + new Date(report.created_at).toLocaleTimeString();
+            
+            html += '<div class="list-group-item list-group-item-action d-flex justify-content-between align-items-start">';
+            html += '<div class="ms-2 me-auto">';
+            html += '<div class="fw-bold">' + reportTypeDisplay + '</div>';
+            html += '<small class="text-muted">Period: ' + (report.period_name || 'N/A') + '</small><br>';
+            html += '<small class="text-muted">Generated: ' + createdAt + '</small>';
+            html += '</div>';
+            html += '<div class="btn-group btn-group-sm" role="group">';
+            
+            if (report.file) {
+                html += '<a href="/accounting/reports/download/' + report.id + '/" class="btn btn-outline-primary btn-sm" title="Download">';
+                html += '<i class="fas fa-download"></i>';
+                html += '</a>';
+            }
+            
+            html += '<a href="/accounting/reports/view/' + report.id + '/" class="btn btn-outline-info btn-sm" title="View">';
+            html += '<i class="fas fa-eye"></i>';
+            html += '</a>';
+            html += '</div>';
+            html += '</div>';
+        });
+        
+        html += '</div>';
+        contentElement.innerHTML = html;
+    }
+    
+    // Load recent reports on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        refreshRecentReports();
+    });
+    </script>
+</div>
+{% endblock %}

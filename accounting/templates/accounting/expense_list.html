@@ -96,7 +96,7 @@
             <div class="card stats-card">
                 <div class="card-body text-center">
                     <i class="fas fa-tags fa-2x mb-3"></i>
-                    <h3 class="mb-0">{{ category_totals|length }}</h3>
+                    <h3 class="mb-0">{{ expense_categories|length }}</h3>
                     <small>Categories</small>
                 </div>
             </div>
@@ -154,7 +154,7 @@
     </div>
 
     <!-- Category Summary -->
-    {% if category_totals %}
+    {% if expense_categories %}
     <div class="row mb-4">
         <div class="col-12">
             <div class="card expense-card">
@@ -163,7 +163,7 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        {% for category in category_totals %}
+                        {% for category in expense_categories %}
                         <div class="col-md-4 col-lg-3 mb-3">
                             <div class="text-center">
                                 <span class="category-badge category-{{ category.category }}">

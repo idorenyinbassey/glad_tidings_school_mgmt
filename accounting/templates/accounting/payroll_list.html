@@ -105,7 +105,7 @@
             <div class="card stats-card">
                 <div class="card-body text-center">
                     <i class="fas fa-money-bill-wave fa-2x mb-3"></i>
-                    <h3 class="mb-0">₦{{ total_payroll|floatformat:0 }}</h3>
+                    <h3 class="mb-0">₦{{ total_amount|floatformat:0 }}</h3>
                     <small>Total Payroll</small>
                 </div>
             </div>
@@ -114,7 +114,7 @@
             <div class="card stats-card">
                 <div class="card-body text-center">
                     <i class="fas fa-check-circle fa-2x mb-3"></i>
-                    <h3 class="mb-0">₦{{ paid_payroll|floatformat:0 }}</h3>
+                    <h3 class="mb-0">₦{{ paid_amount|floatformat:0 }}</h3>
                     <small>Paid Amount</small>
                 </div>
             </div>
@@ -123,7 +123,7 @@
             <div class="card stats-card">
                 <div class="card-body text-center">
                     <i class="fas fa-clock fa-2x mb-3"></i>
-                    <h3 class="mb-0">₦{{ unpaid_payroll|floatformat:0 }}</h3>
+                    <h3 class="mb-0">₦{{ pending_payments|floatformat:0 }}</h3>
                     <small>Pending Amount</small>
                 </div>
             </div>
@@ -354,7 +354,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="generatePayroll()">
+                <button type="button" class="btn btn-primary" onclick="generatePayrollFixed()">
                     <i class="fas fa-cog me-2"></i>Generate Payroll
                 </button>
             </div>
@@ -363,6 +363,10 @@
 </div>
 
 <script>
+// FORCE CACHE REFRESH - Version 3.0 - 2025-07-06T15:30:00
+console.log('=== PAYROLL SCRIPT LOADED - VERSION 3.0 ===');
+console.log('This should show if the updated script is loaded');
+
 document.addEventListener('DOMContentLoaded', function() {
     // Event delegation for mark as paid buttons
     document.addEventListener('click', function(e) {
@@ -374,9 +378,29 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-function generatePayroll() {
-    const month = document.getElementById('payrollMonth').value;
-    const year = document.getElementById('payrollYear').value;
+// Cache buster - Last updated: 2025-07-06 15:30:00
+function generatePayrollFixed() {
+    console.log('=== generatePayrollFixed function called - VERSION 3.0 ===');
+    console.log('This is the FIXED version with proper error handling');
+    
+    const monthElement = document.getElementById('month');
+    const yearElement = document.getElementById('year');
+    
+    console.log('Month element:', monthElement);
+    console.log('Year element:', yearElement);
+    
+    if (!monthElement || !yearElement) {
+        console.error('Form elements not found - Month:', monthElement, 'Year:', yearElement);
+        alert('Form elements not found. Please refresh the page and try again.');
+        return;
+    }
+    
+    const month = monthElement.value;
+    const year = yearElement.value;
+    
+    console.log('Month value:', month);
+    console.log('Year value:', year);
+    console.log('Year value:', year);
     
     if (!month || !year) {
         alert('Please select both month and year');
@@ -384,6 +408,12 @@ function generatePayroll() {
     }
     
     const generateBtn = document.querySelector('#generatePayrollModal .btn-primary');
+    if (!generateBtn) {
+        console.error('Generate button not found');
+        alert('Generate button not found. Please refresh the page and try again.');
+        return;
+    }
+    
     const originalText = generateBtn.innerHTML;
     
     // Show loading state
@@ -406,10 +436,13 @@ function generatePayroll() {
     })
     .then(response => response.json())
     .then(data => {
+        console.log('Payroll generation response:', data); // Debug logging
+        
         generateBtn.innerHTML = originalText;
         generateBtn.disabled = false;
         
         if (data.success) {
+            console.log('Payroll generation successful'); // Debug logging
             // Show success message
             const alertHtml = `
                 <div class="alert alert-success alert-dismissible fade show" role="alert">

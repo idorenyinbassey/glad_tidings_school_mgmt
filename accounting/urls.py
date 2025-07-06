@@ -26,13 +26,17 @@ urlpatterns = [
 
     # Payroll Management
     path('payroll/', views.payroll_list, name='payroll_list'),
+    path('payroll/generate/', views.generate_payroll_ajax, name='generate_payroll_ajax'),
+
+    # Report Management
+    path('reports/generate/', views.generate_report_ajax, name='generate_report_ajax'),
+    path('reports/export/', views.export_report_ajax, name='export_report_ajax'),
+    path('reports/download/<uuid:report_id>/', views.download_report, name='download_report'),
+    path('reports/view/<uuid:report_id>/', views.view_report, name='view_report'),
 
     # AJAX endpoints
     path('ajax/student-search/', views.student_search_ajax, name='student_search_ajax'),
     path('ajax/fee-statistics/', views.fee_statistics_ajax, name='fee_statistics_ajax'),
-    path('ajax/generate-report/', views.generate_report_ajax, name='generate_report_ajax'),
     path('ajax/dashboard-stats/', views.dashboard_stats_ajax, name='dashboard_stats_ajax'),
-
-    # Payroll Management
-    path('payroll/generate/', views.generate_payroll_ajax, name='generate_payroll_ajax'),
+    path('ajax/recent-reports/', views.recent_reports_ajax, name='recent_reports_ajax'),
 ]

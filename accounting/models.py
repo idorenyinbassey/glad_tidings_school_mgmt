@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models, transaction
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+import uuid
 
 
 # Create your models here.
@@ -267,3 +268,66 @@ class Expense(models.Model):
 
     def __str__(self):
         return f"{self.description} - {self.amount} on {self.date}"
+
+
+class FinancialReport(models.Model):
+    """Model to store generated financial reports"""
+    TYPE_CHOICES = [
+        ('income_statement', 'Income Statement'),
+        ('balance_sheet', 'Balance Sheet'), 
+        ('cash_flow', 'Cash Flow Statement'),
+        ('fee_collection', 'Fee Collection Report'),
+        ('expense_report', 'Expense Report'),
+    ]
+    
+    FORMAT_CHOICES = [
+        ('PDF', 'PDF'),
+        ('EXCEL', 'Excel'),
+        ('CSV', 'CSV'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    report_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    format = models.CharField(max_length=10, choices=FORMAT_CHOICES)
+    period_start = models.DateField()
+    period_end = models.DateField()
+    period_name = models.CharField(max_length=100)  # e.g., "January 2025", "Q1 2025"
+    
+    # File storage
+    file = models.FileField(upload_to='financial_reports/', null=True, blank=True)
+    file_size = models.PositiveIntegerField(null=True, blank=True)  # Size in bytes
+    
+    # Report data (JSON for dynamic access)
+    report_data = models.JSONField(default=dict)
+    
+    # Metadata
+    generated_at = models.DateTimeField(auto_now_add=True)
+    generated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    is_available = models.BooleanField(default=True)
+    download_count = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        ordering = ['-generated_at']
+        indexes = [
+            models.Index(fields=['report_type', '-generated_at']),
+            models.Index(fields=['generated_by', '-generated_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.get_report_type_display()} - {self.period_name} ({self.format})"
+    
+    def get_file_size_display(self):
+        """Return human-readable file size"""
+        if not self.file_size:
+            return "Unknown"
+            
+        size_bytes = self.file_size
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size_bytes < 1024 or unit == 'GB':
+                return f"{size_bytes:.2f} {unit}"
+            size_bytes /= 1024
+    
+    def increment_download_count(self):
+        """Increment download counter"""
+        self.download_count += 1
+        self.save(update_fields=['download_count'])

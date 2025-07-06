@@ -1,0 +1,14 @@
+<!-- Dynamic report content template -->
+<div id="report-container">
+    {% if report_data.report_type == 'balance_sheet' %}
+        {% include 'accounting/report_templates/balance_sheet.html' %}
+    {% elif report_data.report_type == 'cash_flow' %}
+        {% include 'accounting/report_templates/cash_flow.html' %}
+    {% elif report_data.report_type == 'fee_collection' %}
+        {% include 'accounting/report_templates/fee_collection.html' %}
+    {% elif report_data.report_type == 'expense_report' %}
+        {% include 'accounting/report_templates/expense_report.html' %}
+    {% else %}
+        {% include 'accounting/report_templates/income_statement.html' %}
+    {% endif %}
+</div>

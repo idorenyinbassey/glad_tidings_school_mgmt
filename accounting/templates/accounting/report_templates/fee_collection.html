@@ -1,0 +1,136 @@
+{% load accounting_filters %}
+
+<div class="fee-collection-report">
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="table-primary">
+                <tr>
+                    <th>Student Name</th>
+                    <th>Class</th>
+                    <th>Fee Type</th>
+                    <th class="text-end">Amount Due</th>
+                    <th class="text-end">Amount Paid</th>
+                    <th class="text-end">Outstanding</th>
+                    <th>Payment Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in report_data.fee_payments %}
+                <tr>
+                    <td>{{ payment.student_name }}</td>
+                    <td>{{ payment.student_class }}</td>
+                    <td>{{ payment.fee_type }}</td>
+                    <td class="text-end">₦{{ payment.amount_due|floatformat:2 }}</td>
+                    <td class="text-end">₦{{ payment.amount_paid|floatformat:2 }}</td>
+                    <td class="text-end">₦{{ payment.outstanding|floatformat:2 }}</td>
+                    <td>{{ payment.payment_date|date:"M d, Y" }}</td>
+                    <td>
+                        <span class="badge {% if payment.status == 'Paid' %}bg-success{% elif payment.status == 'Partial' %}bg-warning{% else %}bg-danger{% endif %}">
+                            {{ payment.status }}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted">No fee payment records found for the selected period.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="table-secondary">
+                <tr class="fw-bold">
+                    <td colspan="3">TOTALS</td>
+                    <td class="text-end">₦{{ report_data.total_due|floatformat:2 }}</td>
+                    <td class="text-end">₦{{ report_data.total_paid|floatformat:2 }}</td>
+                    <td class="text-end">₦{{ report_data.total_outstanding|floatformat:2 }}</td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Fee Collection Summary -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card bg-light">
+                <div class="card-header">
+                    <h6 class="mb-0">Collection Summary</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <strong>Collection Rate:</strong>
+                        </div>
+                        <div class="col-sm-6 text-end">
+                            {{ report_data.collection_rate|floatformat:1 }}%
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <strong>Students Paid:</strong>
+                        </div>
+                        <div class="col-sm-6 text-end">
+                            {{ report_data.students_paid }} / {{ report_data.total_students }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <strong>Avg. Payment:</strong>
+                        </div>
+                        <div class="col-sm-6 text-end">
+                            ₦{{ report_data.average_payment|floatformat:2 }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-light">
+                <div class="card-header">
+                    <h6 class="mb-0">Payment Methods</h6>
+                </div>
+                <div class="card-body">
+                    {% for method in report_data.payment_methods %}
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <strong>{{ method.method }}:</strong>
+                        </div>
+                        <div class="col-sm-6 text-end">
+                            ₦{{ method.amount|floatformat:2 }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Outstanding Fees by Class -->
+    {% if report_data.outstanding_by_class %}
+    <div class="mt-4">
+        <h6>Outstanding Fees by Class</h6>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <thead class="table-secondary">
+                    <tr>
+                        <th>Class</th>
+                        <th class="text-end">Students</th>
+                        <th class="text-end">Total Outstanding</th>
+                        <th class="text-end">Average Outstanding</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for class_data in report_data.outstanding_by_class %}
+                    <tr>
+                        <td>{{ class_data.class_name }}</td>
+                        <td class="text-end">{{ class_data.student_count }}</td>
+                        <td class="text-end">₦{{ class_data.total_outstanding|floatformat:2 }}</td>
+                        <td class="text-end">₦{{ class_data.average_outstanding|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>

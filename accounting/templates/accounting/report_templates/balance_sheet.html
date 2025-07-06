@@ -1,0 +1,68 @@
+<!-- Balance Sheet Template -->
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0" id="report-title">Balance Sheet ({{ report_data.period_name }})</h5>
+        <div class="btn-group">
+            <button type="button" class="btn btn-sm btn-light" id="exportReport" title="Export Report">
+                <i class="fas fa-download me-1"></i>Export
+            </button>
+            <button type="button" class="btn btn-sm btn-light" id="printReport" title="Print Report">
+                <i class="fas fa-print me-1"></i>Print
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th colspan="2" class="bg-light">Balance Sheet</th>
+                    </tr>
+                    <tr>
+                        <th colspan="2" class="text-center">As of {{ report_data.period_name }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="table-primary">
+                        <th colspan="2">Assets</th>
+                    </tr>
+                    <tr>
+                        <td>Cash on Hand</td>
+                        <td class="text-end">₦{{ report_data.assets.cash_on_hand|floatformat:2 }}</td>
+                    </tr>
+                    <tr>
+                        <td>Accounts Receivable</td>
+                        <td class="text-end">₦{{ report_data.assets.accounts_receivable|floatformat:2 }}</td>
+                    </tr>
+                    <tr class="fw-bold">
+                        <td>Total Assets</td>
+                        <td class="text-end">₦{{ report_data.assets.total_assets|floatformat:2 }}</td>
+                    </tr>
+                    
+                    <tr class="table-primary">
+                        <th colspan="2">Liabilities</th>
+                    </tr>
+                    <tr>
+                        <td>Unpaid Payroll</td>
+                        <td class="text-end">₦{{ report_data.liabilities.unpaid_payroll|floatformat:2 }}</td>
+                    </tr>
+                    <tr class="fw-bold">
+                        <td>Total Liabilities</td>
+                        <td class="text-end">₦{{ report_data.liabilities.total_liabilities|floatformat:2 }}</td>
+                    </tr>
+                    
+                    <tr class="table-primary">
+                        <th colspan="2">Equity</th>
+                    </tr>
+                    <tr class="fw-bold">
+                        <td>Net Equity</td>
+                        <td class="text-end">₦{{ report_data.equity.net_equity|floatformat:2 }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer">
+        <small class="text-muted">Generated on {{ report_data.generated_at|date:"F d, Y" }}</small>
+    </div>
+</div>

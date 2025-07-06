@@ -1,0 +1,195 @@
+{% load accounting_filters %}
+
+<div class="expense-report">
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="table-primary">
+                <tr>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Vendor/Payee</th>
+                    <th class="text-end">Amount</th>
+                    <th>Payment Method</th>
+                    <th>Reference</th>
+                    <th>Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for expense in report_data.expenses %}
+                <tr>
+                    <td>{{ expense.date|date:"M d, Y" }}</td>
+                    <td>
+                        <span class="badge bg-secondary">{{ expense.category }}</span>
+                    </td>
+                    <td>{{ expense.description }}</td>
+                    <td>{{ expense.vendor|default:"-" }}</td>
+                    <td class="text-end">₦{{ expense.amount|floatformat:2 }}</td>
+                    <td>{{ expense.payment_method }}</td>
+                    <td>{{ expense.reference|default:"-" }}</td>
+                    <td>{{ expense.approved_by|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted">No expense records found for the selected period.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="table-secondary">
+                <tr class="fw-bold">
+                    <td colspan="4">TOTAL EXPENSES</td>
+                    <td class="text-end">₦{{ report_data.total_expenses|floatformat:2 }}</td>
+                    <td colspan="3"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Expense Analysis -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card bg-light">
+                <div class="card-header">
+                    <h6 class="mb-0">Expenses by Category</h6>
+                </div>
+                <div class="card-body">
+                    {% for category in report_data.expenses_by_category %}
+                    <div class="row mb-2">
+                        <div class="col-sm-7">
+                            <strong>{{ category.name }}:</strong>
+                        </div>
+                        <div class="col-sm-5 text-end">
+                            <span class="badge bg-primary">₦{{ category.amount|floatformat:2 }}</span>
+                            <small class="text-muted">({{ category.percentage|floatformat:1 }}%)</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-light">
+                <div class="card-header">
+                    <h6 class="mb-0">Payment Methods</h6>
+                </div>
+                <div class="card-body">
+                    {% for method in report_data.payment_methods %}
+                    <div class="row mb-2">
+                        <div class="col-sm-7">
+                            <strong>{{ method.method }}:</strong>
+                        </div>
+                        <div class="col-sm-5 text-end">
+                            <span class="badge bg-info">₦{{ method.amount|floatformat:2 }}</span>
+                            <small class="text-muted">({{ method.percentage|floatformat:1 }}%)</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Trend -->
+    {% if report_data.monthly_trend %}
+    <div class="mt-4">
+        <h6>Monthly Expense Trend</h6>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <thead class="table-secondary">
+                    <tr>
+                        <th>Month</th>
+                        <th class="text-end">Total Expenses</th>
+                        <th class="text-end">Transaction Count</th>
+                        <th class="text-end">Average per Transaction</th>
+                        <th class="text-end">% Change</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for month in report_data.monthly_trend %}
+                    <tr>
+                        <td>{{ month.month_name }}</td>
+                        <td class="text-end">₦{{ month.total|floatformat:2 }}</td>
+                        <td class="text-end">{{ month.count }}</td>
+                        <td class="text-end">₦{{ month.average|floatformat:2 }}</td>
+                        <td class="text-end">
+                            {% if month.change > 0 %}
+                                <span class="text-danger">+{{ month.change|floatformat:1 }}%</span>
+                            {% elif month.change < 0 %}
+                                <span class="text-success">{{ month.change|floatformat:1 }}%</span>
+                            {% else %}
+                                <span class="text-muted">0%</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Top Vendors -->
+    {% if report_data.top_vendors %}
+    <div class="mt-4">
+        <h6>Top Vendors/Payees</h6>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <thead class="table-secondary">
+                    <tr>
+                        <th>Vendor/Payee</th>
+                        <th class="text-end">Total Amount</th>
+                        <th class="text-end">Transaction Count</th>
+                        <th class="text-end">Average per Transaction</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for vendor in report_data.top_vendors %}
+                    <tr>
+                        <td>{{ vendor.name }}</td>
+                        <td class="text-end">₦{{ vendor.total|floatformat:2 }}</td>
+                        <td class="text-end">{{ vendor.count }}</td>
+                        <td class="text-end">₦{{ vendor.average|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Expense Summary Stats -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">{{ report_data.total_transactions }}</h5>
+                    <p class="card-text small">Total Transactions</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-success">₦{{ report_data.average_transaction|floatformat:2 }}</h5>
+                    <p class="card-text small">Average Transaction</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">₦{{ report_data.largest_expense|floatformat:2 }}</h5>
+                    <p class="card-text small">Largest Expense</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-info">{{ report_data.unique_vendors }}</h5>
+                    <p class="card-text small">Unique Vendors</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

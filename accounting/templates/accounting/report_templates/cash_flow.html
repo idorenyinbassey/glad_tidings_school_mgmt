@@ -1,0 +1,81 @@
+<!-- Cash Flow Statement Template -->
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0" id="report-title">Cash Flow Statement ({{ report_data.period_name }})</h5>
+        <div class="btn-group">
+            <button type="button" class="btn btn-sm btn-light" id="exportReport" title="Export Report">
+                <i class="fas fa-download me-1"></i>Export
+            </button>
+            <button type="button" class="btn btn-sm btn-light" id="printReport" title="Print Report">
+                <i class="fas fa-print me-1"></i>Print
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th colspan="2" class="bg-light">Cash Flow Statement</th>
+                    </tr>
+                    <tr>
+                        <th colspan="2" class="text-center">For the Period Ended {{ report_data.period_name }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="table-primary">
+                        <th colspan="2">Operating Activities</th>
+                    </tr>
+                    <tr>
+                        <td>Cash from Operations</td>
+                        <td class="text-end">₦{{ report_data.operating_activities.cash_from_operations|floatformat:2 }}</td>
+                    </tr>
+                    <tr>
+                        <td>Cash for Expenses</td>
+                        <td class="text-end">(₦{{ report_data.operating_activities.cash_for_expenses|floatformat:2 }})</td>
+                    </tr>
+                    <tr>
+                        <td>Cash for Payroll</td>
+                        <td class="text-end">(₦{{ report_data.operating_activities.cash_for_payroll|floatformat:2 }})</td>
+                    </tr>
+                    <tr class="fw-bold">
+                        <td>Net Operating Cash Flow</td>
+                        <td class="text-end">₦{{ report_data.operating_activities.net_operating_cash|floatformat:2 }}</td>
+                    </tr>
+                    
+                    <tr class="table-primary">
+                        <th colspan="2">Investing Activities</th>
+                    </tr>
+                    <tr>
+                        <td>Equipment Purchases</td>
+                        <td class="text-end">(₦{{ report_data.investing_activities.equipment_purchases|floatformat:2 }})</td>
+                    </tr>
+                    <tr class="fw-bold">
+                        <td>Net Investing Cash Flow</td>
+                        <td class="text-end">₦{{ report_data.investing_activities.net_investing_cash|floatformat:2 }}</td>
+                    </tr>
+                    
+                    <tr class="table-primary">
+                        <th colspan="2">Financing Activities</th>
+                    </tr>
+                    <tr>
+                        <td>Loans Received</td>
+                        <td class="text-end">₦{{ report_data.financing_activities.loans_received|floatformat:2 }}</td>
+                    </tr>
+                    <tr class="fw-bold">
+                        <td>Net Financing Cash Flow</td>
+                        <td class="text-end">₦{{ report_data.financing_activities.net_financing_cash|floatformat:2 }}</td>
+                    </tr>
+                    
+                    <tr class="{% if report_data.net_change_in_cash >= 0 %}table-success{% else %}table-danger{% endif %} fw-bold">
+                        <td>Net Change in Cash</td>
+                        <td class="text-end">₦{{ report_data.net_change_in_cash|floatformat:2 }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer">
+        <small class="text-muted">Generated on {{ report_data.generated_at|date:"F d, Y" }}</small>
+    </div>
+</div>
