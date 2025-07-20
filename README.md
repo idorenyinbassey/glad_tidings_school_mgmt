@@ -29,6 +29,7 @@ A comprehensive school management system built with Django, featuring role-based
 - **E-Library**: Digital resources for students and staff
 - **Computer-Based Testing (CBT)**: Online assessment platform
 - **Mobile-First Design**: Fully responsive interface for all devices
+- **Multiple Deployment Options**: 🐳 Docker containerization or 🌐 Traditional LAMP stack
 - **Production-Ready**: Clean code, zero linting errors, optimized performance
 
 ## Screenshots
@@ -38,6 +39,7 @@ A comprehensive school management system built with Django, featuring role-based
 
 ## Documentation
 
+- [LAMP Deployment Guide](LAMP_DEPLOYMENT_GUIDE.md): 🌐 **NEW** - Complete LAMP stack deployment guide
 - [Docker Guide](docs/DOCKER_GUIDE.md): 🐳 Complete Docker deployment guide (Recommended)
 - [Installation Guide](docs/INSTALLATION.md): Comprehensive setup instructions
 - [User Guide](docs/user_guide.md): Complete guide for all users
@@ -59,12 +61,14 @@ A comprehensive school management system built with Django, featuring role-based
 - **Authentication**: Django Authentication System with Two-Factor Auth
 - **Caching**: Redis for performance optimization
 - **Testing**: Django Test Framework, pytest
-- **Deployment**: 🐳 Docker & Docker Compose, Nginx, Gunicorn
+- **Deployment**: 🐳 Docker & Docker Compose, 🌐 LAMP Stack, Nginx, Gunicorn
 - **CI/CD**: GitHub Actions
 
 ## Quick Start
 
-🐳 **Docker Deployment (Recommended)**
+🚀 **Choose Your Deployment Method**
+
+### 🐳 **Docker Deployment (Recommended)**
 
 For the easiest deployment, use Docker:
 
@@ -92,7 +96,31 @@ docker-compose up --build -d
 
 See the [Docker Guide](docs/DOCKER_GUIDE.md) for detailed Docker deployment instructions.
 
-🖥️ **Traditional Installation**
+### 🌐 **LAMP Stack Deployment**
+
+For deployment on traditional LAMP hosting (shared hosting, VPS):
+
+```bash
+# Clone repository
+git clone https://github.com/idorenyinbassey/glad_tidings_school_mgmt.git
+cd glad_tidings_school_mgmt
+
+# Automated LAMP deployment (Ubuntu/CentOS)
+chmod +x deploy_lamp.sh
+./deploy_lamp.sh
+
+# Manual LAMP setup
+pip install -r requirements_lamp.txt
+# Configure Apache and MySQL (see LAMP guide)
+```
+
+**LAMP Access Points:**
+- Web Interface: http://your-domain.com/
+- Admin Panel: http://your-domain.com/admin/
+
+See the [LAMP Deployment Guide](LAMP_DEPLOYMENT_GUIDE.md) for detailed LAMP stack deployment instructions.
+
+### 🖥️ **Traditional Development Installation**
 
 For detailed installation instructions, see the [Installation Guide](docs/INSTALLATION.md).
 
