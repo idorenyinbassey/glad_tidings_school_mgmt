@@ -1,0 +1,103 @@
+# LAMP Stack Requirements
+# Modified requirements.txt for LAMP deployment
+
+# Core dependencies
+Django>=5.2.0
+asgiref
+django-csp
+django-environ
+pillow
+sqlparse
+tzdata
+
+# API and serialization
+djangorestframework
+django-filter
+django-cors-headers
+django-import-export
+
+# Database adapters - LAMP specific
+mysqlclient>=2.2.0  # MySQL adapter for Django
+PyMySQL>=1.0.0      # Alternative MySQL adapter (fallback)
+
+# Production WSGI server
+gunicorn
+
+# Security and authentication
+django-oauth-toolkit
+
+# Monitoring and debugging (development)
+django-extensions
+
+# Testing and debugging
+pytest
+pytest-cov
+pytest-django
+coverage
+Pygments
+
+# System monitoring
+psutil
+requests
+
+# PDF generation
+reportlab
+
+# Development tools
+colorama
+iniconfig
+packaging
+pluggy
+
+# Static file serving
+whitenoise>=6.0.0  # Essential for LAMP static file serving
+
+# Enhanced accounting dependencies
+openpyxl
+xlsxwriter
+pandas
+numpy
+matplotlib
+seaborn
+plotly
+python-dateutil
+
+# Environment variable management
+python-decouple
+
+# Advanced Excel and CSV processing
+tablib
+csvkit
+
+# Enhanced PDF generation
+weasyprint
+xhtml2pdf
+
+# Data validation and cleaning
+cerberus
+jsonschema
+
+# Enhanced logging and monitoring
+structlog
+
+# Backup and data management
+django-dbbackup
+
+# Advanced financial calculations
+sympy
+python-money
+
+# LAMP-specific additions
+mod-wsgi>=4.9.0     # Apache WSGI module (if installing via pip)
+
+# Optional: For better MySQL performance
+mysql-connector-python  # Alternative MySQL connector
+
+# Session management (since we're not using Redis in basic LAMP)
+django-sessions
+
+# Cache framework for database caching
+django-cache-utils
+
+# For file upload handling in Apache environment
+django-upload-validator
