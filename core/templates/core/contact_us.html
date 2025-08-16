@@ -1,0 +1,65 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <h1 class="mb-4">Contact Us</h1>
+      <!-- General Info -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+          <h5 class="card-title mb-3">General info</h5>
+          <ul class="list-unstyled mb-0">
+            <li class="mb-2">
+              <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+              <strong>Location:</strong>
+              <span>Mbiabong Eto Uyo , off Oron road.</span>
+            </li>
+            <li class="mb-2">
+              <i class="fas fa-phone me-2 text-primary"></i>
+              <strong>Phone:</strong>
+              <a href="tel:+2347068578415" class="text-decoration-none">+234 706 857 8415</a>
+            </li>
+            <li>
+              <i class="fas fa-envelope me-2 text-primary"></i>
+              <strong>Email:</strong>
+              <a href="mailto:info@gladtidingscollege.com.ng" class="text-decoration-none">info@gladtidingscollege.com.ng</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="card border-0 shadow">
+        <div class="card-body p-4">
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label">Full Name</label>
+              <input type="text" name="full_name" class="form-control" value="{{ form.full_name.value|default:'' }}" required />
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6 mb-3 mb-md-0">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-control" value="{{ form.email.value|default:'' }}" required />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Phone</label>
+                <input type="tel" name="phone" class="form-control" value="{{ form.phone.value|default:'' }}" />
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Subject</label>
+              <input type="text" name="subject" class="form-control" value="{{ form.subject.value|default:'' }}" required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Message</label>
+              <textarea name="message" rows="5" class="form-control" required>{{ form.message.value|default:'' }}</textarea>
+            </div>
+            <div class="text-end">
+              <button type="submit" class="btn btn-primary">Send Message</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

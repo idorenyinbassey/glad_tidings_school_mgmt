@@ -3,19 +3,61 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseNotFound, HttpResponseServerError
 from django.template import loader
 from django.conf import settings
+from django.core.paginator import Paginator
+from django.utils import timezone
+from django.db.models import Q
 import logging
 import json
+from django.contrib import messages
+from .forms import AdmissionApplicationForm, ContactForm
+from .models import InboxMessage
 
 logger = logging.getLogger(__name__)
 
 def landing_page(request):
-    return render(request, 'core/landing.html')
+    """Landing page with latest news and upcoming events using core CMS models."""
+    from .models import NewsPost, UpcomingEvent
+
+    now_dt = timezone.now()
+    # Latest news: published NewsPost
+    latest_news = NewsPost.objects.filter(is_published=True).order_by('-published_at')[:2]
+
+    # Upcoming events: events that haven't ended yet (or start in future)
+    upcoming_events = UpcomingEvent.objects.filter(
+        is_published=True
+    ).filter(
+        Q(end_time__gte=now_dt) | Q(start_time__gte=now_dt)
+    ).order_by('start_time')[:3]
+
+    return render(
+        request,
+        'core/landing.html',
+        {'latest_news': latest_news, 'upcoming_events': upcoming_events}
+    )
 
 def about_us(request):
     return render(request, 'core/about_us.html')
 
 def admission(request):
-    return render(request, 'core/admission.html')
+    # Handle admission application submission
+    if request.method == 'POST':
+        form = AdmissionApplicationForm(request.POST)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            # metadata
+            obj.source_page = 'admission'
+            obj.source_ip = request.META.get('REMOTE_ADDR')
+            obj.user_agent = request.META.get('HTTP_USER_AGENT', '')[:255]
+            if request.user.is_authenticated:
+                obj.submitted_by = request.user
+            obj.save()
+            messages.success(request, 'Your application has been submitted successfully. We will contact you soon.')
+            return redirect('admission')
+        else:
+            messages.error(request, 'Please correct the errors in the form and try again.')
+    else:
+        form = AdmissionApplicationForm()
+    return render(request, 'core/admission.html', {'admission_form': form})
 
 def academics_page(request):
     return render(request, 'core/academics.html')
@@ -46,6 +88,26 @@ def dashboard(request):
         return render(request, 'core/dashboard_it.html')
     else:
         return render(request, 'core/dashboard.html')
+
+
+def contact_us(request):
+    if request.method == 'POST':
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.source_page = 'contact'
+            obj.source_ip = request.META.get('REMOTE_ADDR')
+            obj.user_agent = request.META.get('HTTP_USER_AGENT', '')[:255]
+            if request.user.is_authenticated:
+                obj.submitted_by = request.user
+            obj.save()
+            messages.success(request, 'Thanks for reaching out! Your message has been received.')
+            return redirect('contact_us')
+        else:
+            messages.error(request, 'Please correct the errors and try again.')
+    else:
+        form = ContactForm()
+    return render(request, 'core/contact_us.html', {'form': form})
 
 
 def custom_404(request, exception):
@@ -153,7 +215,8 @@ def get_admin_dashboard_context():
     # Recent registrations
     recent_students = StudentProfile.objects.order_by('-created_at')[:2]
     for student in recent_students:
-        days_ago = (today - student.created_at.date()).days
+        created_date = student.created_at.date() if getattr(student, 'created_at', None) else today
+        days_ago = (today - created_date).days
         time_ago = f"{days_ago} day{'s' if days_ago != 1 else ''} ago" if days_ago > 0 else "Today"
         recent_activities.append({
             'time': time_ago,
@@ -286,3 +349,26 @@ def get_student_dashboard_context(user):
             'student_profile': None,
             'recent_results': [],
         }
+
+
+# Public listing pages
+def news_list(request):
+    """List published news posts (core CMS)."""
+    from .models import NewsPost
+
+    qs = NewsPost.objects.filter(is_published=True).order_by('-published_at')
+    paginator = Paginator(qs, 10)
+    page_obj = paginator.get_page(request.GET.get('page') or 1)
+    return render(request, 'core/news_list.html', {'page_obj': page_obj})
+
+
+def events_list(request):
+    """List upcoming events from core CMS."""
+    from .models import UpcomingEvent
+
+    now_dt = timezone.now()
+    qs = UpcomingEvent.objects.filter(is_published=True)
+    qs = qs.filter(Q(end_time__gte=now_dt) | Q(start_time__gte=now_dt)).order_by('start_time')
+    paginator = Paginator(qs, 10)
+    page_obj = paginator.get_page(request.GET.get('page') or 1)
+    return render(request, 'core/events_list.html', {'page_obj': page_obj})
