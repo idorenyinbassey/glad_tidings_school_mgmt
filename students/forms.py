@@ -9,9 +9,10 @@ class StudentProfileForm(forms.ModelForm):
     
     class Meta:
         model = StudentProfile
-        fields = ['user', 'admission_number', 'date_of_birth', 'address', 'guardian_name', 'guardian_contact']
+        fields = ['user', 'admission_number', 'date_of_birth', 'gender', 'address', 'guardian_name', 'guardian_contact']
         widgets = {
             'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
+            'gender': forms.Select(choices=StudentProfile.GENDER_CHOICES),
             'address': forms.Textarea(attrs={'rows': 3}),
             'admission_number': forms.TextInput(attrs={'placeholder': 'e.g., GTS/2024/001'}),
             'guardian_name': forms.TextInput(attrs={'placeholder': 'Full name of guardian'}),

@@ -4,15 +4,10 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.http import JsonResponse, HttpResponse
 from django.core.paginator import Paginator
-from django.db.models import Q, Avg, Count, Max
-from django.utils import timezone
-from django.views.decorators.http import require_http_methods
-from django.template.loader import render_to_string
-import json
+from django.db.models import Avg
 import csv
 from io import StringIO
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
@@ -20,7 +15,6 @@ from reportlab.lib.units import inch
 
 from core.decorators import role_required
 from students.models import StudentProfile
-from staff.models import StaffProfile
 from results.models import (
     AcademicSession, AcademicTerm, Subject, StudentClass, Assessment,
     StudentResult, TermResult, ResultSheet
@@ -174,7 +168,7 @@ def get_class_students(request):
         students_data = []
         for student in students:
             students_data.append({
-                'id': student.id,
+                'id': student.id,  # type: ignore[attr-defined]
                 'name': student.user.get_full_name(),
                 'admission_number': student.admission_number or 'N/A'
             })
@@ -306,6 +300,77 @@ def result_sheets(request):
     return render(request, 'results/sheets.html', context)
 
 
+def get_class_subject_average(session, term, student_class, subject):
+    """Return class average percentage for a subject in a given class/session/term."""
+    agg = TermResult.objects.filter(
+        session=session,
+        term=term,
+        student_class=student_class,
+        subject=subject,
+    ).aggregate(avg=Avg('percentage'))
+    return float(agg['avg'] or 0.0)
+
+
+def get_class_overall_average(session, term, student_class):
+    """Return overall class average percentage across all subjects/results.
+
+    Note: This computes the average of TermResult.percentages across the class.
+    """
+    agg = TermResult.objects.filter(
+        session=session,
+        term=term,
+        student_class=student_class,
+    ).aggregate(avg=Avg('percentage'))
+    return float(agg['avg'] or 0.0)
+
+
+@login_required
+@role_required(['staff', 'admin'])
+def class_averages_api(request):
+    """JSON: class-wide averages for a class/session/term, optionally per subject."""
+    class_id = request.GET.get('class_id')
+    session_id = request.GET.get('session_id')
+    term_id = request.GET.get('term_id')
+
+    if not all([class_id, session_id, term_id]):
+        return JsonResponse({'error': 'Missing required parameters'}, status=400)
+
+    try:
+        student_class = get_object_or_404(StudentClass, id=class_id)
+        session = get_object_or_404(AcademicSession, id=session_id)
+        term = get_object_or_404(AcademicTerm, id=term_id)
+
+        # Subjects present in TermResult for this class/term/session
+        subject_ids = TermResult.objects.filter(
+            session=session, term=term, student_class=student_class
+        ).values_list('subject_id', flat=True).distinct()
+
+        subjects = Subject.objects.filter(id__in=subject_ids).order_by('name')
+        per_subject = []
+        for subj in subjects:
+            per_subject.append({
+                'subject_id': subj.id,  # type: ignore[attr-defined]
+                'subject': subj.name,
+                'average_percentage': round(get_class_subject_average(session, term, student_class, subj), 2),
+            })
+
+        overall_avg = round(get_class_overall_average(session, term, student_class), 2)
+        student_count = TermResult.objects.filter(
+            session=session, term=term, student_class=student_class
+        ).values('student').distinct().count()
+
+        return JsonResponse({
+            'class': student_class.name,
+            'session': session.name,
+            'term': term.get_name_display(),  # type: ignore[attr-defined]
+            'overall_average': overall_avg,
+            'student_count': student_count,
+            'subjects': per_subject,
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
 def generate_result_sheets(request):
     """Generate result sheets for students"""
     try:
@@ -336,14 +401,14 @@ def generate_result_sheets(request):
                 sheets_generated += 1
             
             messages.success(
-                request, 
+                request,
                 f'{sheets_generated} result sheets generated successfully!'
             )
             
     except Exception as e:
         messages.error(request, f'Error generating result sheets: {str(e)}')
     
-    return redirect('academics:result_sheets')
+    return redirect('results:result_sheets')
 
 
 @login_required
@@ -360,10 +425,14 @@ def print_result_sheet(request, sheet_id):
     ).select_related('subject').order_by('subject__name')
     
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="result_sheet_{result_sheet.student.admission_number}_{result_sheet.session.name}_{result_sheet.term.name}.pdf"'
+    filename = (
+        f"result_sheet_{result_sheet.student.admission_number}_"
+        f"{result_sheet.session.name}_{result_sheet.term.name}.pdf"
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
     
     # Create PDF
-    doc = SimpleDocTemplate(response, pagesize=A4)
+    doc = SimpleDocTemplate(response, pagesize=A4)  # type: ignore[arg-type]
     story = []
     styles = getSampleStyleSheet()
     
@@ -386,7 +455,7 @@ def print_result_sheet(request, sheet_id):
         ['Admission Number:', result_sheet.student.admission_number],
         ['Class:', result_sheet.student_class.name],
         ['Session:', result_sheet.session.name],
-        ['Term:', result_sheet.term.get_name_display()],
+    ['Term:', result_sheet.term.get_name_display()],  # type: ignore[attr-defined]
     ]
     
     student_table = Table(student_info, colWidths=[2*inch, 4*inch])
@@ -405,18 +474,25 @@ def print_result_sheet(request, sheet_id):
     story.append(Spacer(1, 20))
     
     # Results table
-    results_data = [['Subject', 'Score', 'Grade', 'Position', 'Remarks']]
+    results_data = [['Subject', 'Score', 'Grade', 'Class Avg', 'Position', 'Remarks']]
     
     for result in term_results:
+        class_avg = get_class_subject_average(
+            result_sheet.session,
+            result_sheet.term,
+            result_sheet.student_class,
+            result.subject,
+        )
         results_data.append([
             result.subject.name,
             f"{result.percentage:.1f}%",
             result.grade,
+            f"{class_avg:.1f}%",
             f"{result.position_in_class}/{result.total_students}" if result.position_in_class else "N/A",
             result.teacher_remarks[:50] if result.teacher_remarks else ""
         ])
     
-    results_table = Table(results_data, colWidths=[2*inch, 1*inch, 0.8*inch, 1*inch, 2*inch])
+    results_table = Table(results_data, colWidths=[2*inch, 1*inch, 0.8*inch, 1*inch, 1*inch, 2*inch])
     results_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -435,10 +511,22 @@ def print_result_sheet(request, sheet_id):
     story.append(Spacer(1, 20))
     
     # Overall performance
+    class_overall_avg = get_class_overall_average(
+        result_sheet.session,
+        result_sheet.term,
+        result_sheet.student_class,
+    )
+
+    pos_str = (
+        f"{result_sheet.position_in_class}/{result_sheet.total_students}"
+        if result_sheet.position_in_class else "N/A"
+    )
+
     overall_info = [
         ['Overall Percentage:', f"{result_sheet.overall_percentage:.1f}%"],
         ['Overall Grade:', result_sheet.overall_grade],
-        ['Position in Class:', f"{result_sheet.position_in_class}/{result_sheet.total_students}" if result_sheet.position_in_class else "N/A"],
+        ['Class Overall Average:', f"{class_overall_avg:.1f}%"],
+        ['Position in Class:', pos_str],
     ]
     
     overall_table = Table(overall_info, colWidths=[2*inch, 2*inch])
@@ -500,11 +588,11 @@ def handle_bulk_upload(request):
         csv_file = request.FILES.get('csv_file')
         if not csv_file:
             messages.error(request, 'Please select a CSV file.')
-            return redirect('academics:bulk_upload_results')
+            return redirect('results:bulk_upload_results')
         
         if not csv_file.name.endswith('.csv'):
             messages.error(request, 'Please upload a valid CSV file.')
-            return redirect('academics:bulk_upload_results')
+            return redirect('results:bulk_upload_results')
         
         # Get form parameters
         session = get_object_or_404(AcademicSession, id=request.POST.get('session'))
@@ -599,7 +687,7 @@ def handle_bulk_upload(request):
     except Exception as e:
         messages.error(request, f'Upload failed: {str(e)}')
     
-    return redirect('academics:bulk_upload_results')
+    return redirect('results:bulk_upload_results')
 
 
 @login_required

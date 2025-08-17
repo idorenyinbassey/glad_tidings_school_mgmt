@@ -1,0 +1,21 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h1>Grade Submission</h1>
+  <div class="card mb-3">
+    <div class="card-body">
+      <p><strong>Student:</strong> {{ submission.student.user.get_full_name }}</p>
+      <p><strong>Assignment:</strong> {{ submission.assignment.title }}</p>
+      <p><a href="{{ submission.file.url }}" class="btn btn-outline-secondary btn-sm">Download File</a></p>
+    </div>
+  </div>
+  <form method="post">
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-md-4">{{ form.grade.label_tag }} {{ form.grade }}</div>
+      <div class="col-12">{{ form.feedback.label_tag }} {{ form.feedback }}</div>
+    </div>
+    <button type="submit" class="btn btn-primary mt-3">Save Grade</button>
+  </form>
+</div>
+{% endblock %}

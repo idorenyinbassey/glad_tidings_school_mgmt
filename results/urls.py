@@ -15,4 +15,5 @@ urlpatterns = [
     
     # AJAX endpoints
     path('api/class-students/', views.get_class_students, name='get_class_students'),
+    path('api/class-averages/', views.class_averages_api, name='class_averages_api'),
 ]

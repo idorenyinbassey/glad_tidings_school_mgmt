@@ -1,0 +1,40 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h1>My Assignments</h1>
+  <div class="row">
+    <div class="col-md-8">
+      <h4>Open Assignments</h4>
+      <ul class="list-group mb-4">
+        {% for a in assignments %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <strong>{{ a.title }}</strong>
+              <div class="small text-muted">Subject: {{ a.subject }} • Class: {{ a.assigned_class }} • Due: {{ a.due_date }}</div>
+            </div>
+            <a href="{% url 'assignments:submit_assignment' a.id %}" class="btn btn-primary btn-sm">Submit</a>
+          </li>
+        {% empty %}
+          <li class="list-group-item">No assignments.</li>
+        {% endfor %}
+      </ul>
+
+      <h4>My Submissions</h4>
+      <ul class="list-group">
+        {% for s in submissions %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <strong>{{ s.assignment.title }}</strong>
+              <div class="small text-muted">Submitted: {{ s.submitted_at }}{% if s.grade %} • Grade: {{ s.grade }}{% endif %}</div>
+              {% if s.feedback %}<div class="small">Feedback: {{ s.feedback }}</div>{% endif %}
+            </div>
+            <a href="{{ s.file.url }}" class="btn btn-outline-secondary btn-sm">Download</a>
+          </li>
+        {% empty %}
+          <li class="list-group-item">No submissions yet.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

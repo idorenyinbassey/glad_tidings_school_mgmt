@@ -1,0 +1,16 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h1>CBT Results</h1>
+  {% if results %}
+    <ul class="list-group">
+      {% for r in results %}
+        <li class="list-group-item">{{ r.exam_name }} — {{ r.score }}%</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="alert alert-info">No CBT results to display yet.</div>
+  {% endif %}
+</div>
+{% endblock %}

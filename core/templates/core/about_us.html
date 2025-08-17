@@ -1,4 +1,5 @@
 {% extends 'core/base.html' %}
+{% load static %}
 
 {% block content %}
 <!-- Hero Section -->
@@ -34,6 +35,29 @@
                     <h5 class="card-title">Our Campus Through the Years</h5>
                     <p class="card-text">From humble beginnings to a modern educational facility, our campus has evolved while maintaining its core values and commitment to excellence.</p>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- From the Principal's Desk -->
+<div class="container my-5">
+    <div class="row align-items-center">
+        <div class="col-md-4 text-center mb-4 mb-md-0">
+            <!-- Principal photo (place image at core/static/core/images/principal.jpg) -->
+            <img src="{% static 'core/images/principal.jpg' %}" alt="Principal - Mr. Anietie Edet" class="img-fluid rounded shadow-sm" style="max-width: 260px;">
+        </div>
+        <div class="col-md-8">
+            <h2 class="mb-4">From the Principal’s Desk</h2>
+            <p>Glad Tidings College is a co-educational institution that provides effective and standard learning environment that promote and encourage academic excellence, creativity and self-improvement.</p>
+            <p>Our dedicated team of teachers and staff work relentlessly to ensure that every learner receives the support and guidance they need to thrive in all the Science, Art and Commercial subjects.</p>
+            <p>We believed in motivating our students to become self-assured, optimistic, dutiful, accountable, bold, humane and skilled individuals who will make a valuable contribution and meaningful difference in the society.</p>
+
+            <p class="lead text-center mt-4">Welcome to Glad Tidings College</p>
+
+            <div class="text-end mt-4">
+                <strong>Mr. Anietie Edet</strong><br>
+                <small class="text-muted">Principal</small>
             </div>
         </div>
     </div>
@@ -114,11 +138,11 @@
         <div class="row">
             <div class="col-lg-4 col-md-6 mb-4">
                 <div class="card border-0 shadow text-center h-100">
-                    <img src="https://via.placeholder.com/300x300" class="card-img-top rounded-circle w-50 mx-auto mt-3" alt="Principal">
+                    <img src="{% static 'core/images/principal.jpg' %}" class="card-img-top rounded-circle w-50 mx-auto mt-3" alt="Principal">
                     <div class="card-body">
-                        <h5 class="card-title">Dr. Sarah Johnson</h5>
+                        <h5 class="card-title">Mr Anietie Edet</h5>
                         <p class="text-muted">Principal</p>
-                        <p class="card-text">With over 20 years of experience in education, Dr. Johnson leads our school with passion and dedication to academic excellence.</p>
+                        <p class="card-text">With over 10 years of experience in education, Mr. Edet leads our school with passion and dedication to academic excellence.</p>
                     </div>
                 </div>
             </div>

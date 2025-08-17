@@ -1,0 +1,12 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h1>CBT Home</h1>
+  <p>Welcome to the Computer Based Testing (CBT) portal.</p>
+  <div class="list-group mt-3">
+    <a href="{% url 'cbt:exams' %}" class="list-group-item list-group-item-action">Available Exams</a>
+    <a href="{% url 'cbt:results' %}" class="list-group-item list-group-item-action">My CBT Results</a>
+  </div>
+</div>
+{% endblock %}

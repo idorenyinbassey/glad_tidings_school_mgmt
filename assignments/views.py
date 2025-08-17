@@ -1,22 +1,85 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.utils import timezone
+from core.decorators import role_required
+from .models import Assignment, Submission
+from .forms import AssignmentForm, SubmissionForm, SubmissionGradeForm
 
+ 
 @login_required
 def assignments_home(request):
     return render(request, 'assignments/assignments_home.html')
 
+ 
 @login_required
+@role_required(['student'])
 def student_assignments(request):
-    # In a real application, you would fetch assignments for students
+    # Show assignments and allow submission upload
+    assignments = Assignment.objects.all().order_by('-due_date')
+    submissions = Submission.objects.filter(student__user=request.user)
     context = {
-        'assignments': []
+        'assignments': assignments,
+        'submissions': submissions,
     }
     return render(request, 'assignments/student_assignments.html', context)
 
+ 
 @login_required
+@role_required(['staff', 'admin'])
 def staff_assignments(request):
-    # In a real application, you would fetch assignments for staff to manage
+    # List and create assignments
+    if request.method == 'POST':
+        form = AssignmentForm(request.POST)
+        if form.is_valid():
+            assignment = form.save(commit=False)
+            assignment.created_by = request.user
+            assignment.save()
+            messages.success(request, 'Assignment created.')
+            return redirect('assignments:staff_assignments')
+    else:
+        form = AssignmentForm()
+
+    assignments = Assignment.objects.all().order_by('-created_at')
     context = {
-        'assignments': []
+        'form': form,
+        'assignments': assignments,
     }
     return render(request, 'assignments/staff_assignments.html', context)
+
+
+@login_required
+@role_required(['student'])
+def submit_assignment(request, assignment_id):
+    assignment = get_object_or_404(Assignment, id=assignment_id)
+    if request.method == 'POST':
+        form = SubmissionForm(request.POST, request.FILES)
+        if form.is_valid():
+            submission = form.save(commit=False)
+            from students.models import StudentProfile
+            submission.student = get_object_or_404(StudentProfile, user=request.user)
+            submission.assignment = assignment
+            submission.save()
+            messages.success(request, 'Submission uploaded.')
+            return redirect('assignments:student_assignments')
+    else:
+        form = SubmissionForm()
+    return render(request, 'assignments/submit.html', {'assignment': assignment, 'form': form})
+
+
+@login_required
+@role_required(['staff', 'admin'])
+def grade_submission(request, submission_id):
+    submission = get_object_or_404(Submission, id=submission_id)
+    if request.method == 'POST':
+        form = SubmissionGradeForm(request.POST, instance=submission)
+        if form.is_valid():
+            graded = form.save(commit=False)
+            graded.graded_by = request.user
+            graded.graded_at = timezone.now()
+            graded.save()
+            messages.success(request, 'Submission graded.')
+            return redirect('assignments:staff_assignments')
+    else:
+        form = SubmissionGradeForm(instance=submission)
+    return render(request, 'assignments/grade.html', {'submission': submission, 'form': form})

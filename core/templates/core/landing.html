@@ -28,6 +28,18 @@
       data-bs-slide-to="2"
       aria-label="Slide 3"
     ></button>
+    <button
+      type="button"
+      data-bs-target="#heroCarousel"
+      data-bs-slide-to="3"
+      aria-label="Slide 4"
+    ></button>
+    <button
+      type="button"
+      data-bs-target="#heroCarousel"
+      data-bs-slide-to="4"
+      aria-label="Slide 5"
+    ></button>
   </div>
   <div class="carousel-inner">
     <div class="carousel-item active">
@@ -35,7 +47,7 @@
         src="{% static 'images/landing/hero_1.jpg' %}"
         class="d-block w-100 carousel-image"
         alt="College Building"
-        style="height: 400px; object-fit: cover"
+        style="height: 513.4px; object-fit: cover"
       />
       <div class="carousel-caption hero-caption">
         <h2 class="fs-3 fs-md-2">Welcome to Glad Tidings College</h2>
@@ -61,7 +73,7 @@
         src="{% static 'images/landing/hero_2.jpg' %}"
         class="d-block w-100 carousel-image"
         alt="Students in Classroom"
-        style="height: 400px; object-fit: cover"
+        style="height: 513.4px; object-fit: cover"
       />
       <div class="carousel-caption hero-caption">
         <h2 class="fs-3 fs-md-2">Academic Excellence</h2>
@@ -88,7 +100,7 @@
         src="{% static 'images/landing/hero_3.jpg' %}"
         class="d-block w-100 carousel-image"
         alt="College Sports"
-        style="height: 400px; object-fit: cover"
+        style="height: 513.4px; object-fit: cover"
       />
       <div class="carousel-caption hero-caption">
         <h2 class="fs-3 fs-md-2">All-Round Development</h2>
@@ -106,6 +118,38 @@
             class="btn btn-outline-light btn-sm btn-md-lg"
             >Join Us</a
           >
+        </div>
+      </div>
+    </div>
+    <div class="carousel-item">
+      <img
+        src="{% static 'images/landing/hero_4.jpg' %}"
+        class="d-block w-100 carousel-image"
+        alt="Laboratory / Science"
+        style="height: 513.4px; object-fit: cover"
+      />
+      <div class="carousel-caption hero-caption">
+        <h2 class="fs-3 fs-md-2">STEM & Laboratories</h2>
+        <p class="d-none d-sm-block">Well-equipped labs to support science and technology learning.</p>
+        <div class="mt-2 mt-md-3">
+          <a href="{% url 'academics' %}" class="btn btn-primary btn-sm btn-md-lg mb-1 mb-md-0">Learn More</a>
+          <a href="{% url 'about_us' %}" class="btn btn-outline-light btn-sm btn-md-lg">About Us</a>
+        </div>
+      </div>
+    </div>
+    <div class="carousel-item">
+      <img
+        src="{% static 'images/landing/hero_5.jpg' %}"
+        class="d-block w-100 carousel-image"
+        alt="Arts & Culture"
+        style="height: 513.4px; object-fit: cover"
+      />
+      <div class="carousel-caption hero-caption">
+        <h2 class="fs-3 fs-md-2">Arts & Culture</h2>
+        <p class="d-none d-sm-block">Nurturing creativity through arts, music and cultural programs.</p>
+        <div class="mt-2 mt-md-3">
+          <a href="{% url 'about_us' %}" class="btn btn-primary btn-sm btn-md-lg mb-1 mb-md-0">Our Programs</a>
+          <a href="{% url 'admission' %}" class="btn btn-outline-light btn-sm btn-md-lg">Apply Now</a>
         </div>
       </div>
     </div>

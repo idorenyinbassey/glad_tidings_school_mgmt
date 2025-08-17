@@ -3,18 +3,18 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from django.contrib import messages
-from django.db.models import Q, Avg
+ 
 from django.utils import timezone
 from core.decorators import role_required
 from students.models import StudentProfile
 from results.models import StudentResult, TermResult, AcademicSession, AcademicTerm, Subject
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 from io import BytesIO
+
 
 @login_required
 @role_required(['student'])
@@ -25,11 +25,8 @@ def student_home(request):
 @login_required
 @role_required(['student'])
 def assignments(request):
-    # In a real application, you would fetch assignments for the student
-    context = {
-        'assignments': []
-    }
-    return render(request, 'students/assignments.html', context)
+    # Redirect to canonical assignments module
+    return HttpResponseRedirect(reverse('assignments:student_assignments'))
 
 
 @login_required
@@ -120,10 +117,55 @@ def results(request):
 @login_required
 @role_required(['student'])
 def attendance(request):
-    # In a real application, you would fetch attendance for the student
-    context = {
-        'attendance': []
-    }
+    # Show logged-in student's attendance with optional date filters
+    try:
+        student_profile = StudentProfile.objects.get(user=request.user)
+
+        # Optional filters: start_date and end_date in YYYY-MM-DD
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+
+        records = (
+            student_profile.attendance_records.all().order_by('-date')  # pyright: ignore[reportAttributeAccessIssue]
+        )
+        if start_date:
+            try:
+                records = records.filter(date__gte=start_date)
+            except Exception:
+                messages.warning(request, 'Invalid start date filter ignored.')
+        if end_date:
+            try:
+                records = records.filter(date__lte=end_date)
+            except Exception:
+                messages.warning(request, 'Invalid end date filter ignored.')
+
+        total = records.count()
+        present = records.filter(present=True).count()
+        absent = records.filter(present=False).count()
+        percent = round((present / total) * 100, 1) if total else 0.0
+
+        context = {
+            'student_profile': student_profile,
+            'records': records,
+            'total_days': total,
+            'days_present': present,
+            'days_absent': absent,
+            'attendance_percent': percent,
+            'start_date': start_date or '',
+            'end_date': end_date or '',
+        }
+    except StudentProfile.DoesNotExist:
+        messages.error(request, 'Student profile not found.')
+        context = {
+            'records': [],
+            'total_days': 0,
+            'days_present': 0,
+            'days_absent': 0,
+            'attendance_percent': 0.0,
+            'start_date': '',
+            'end_date': '',
+        }
+
     return render(request, 'students/attendance.html', context)
 
 
@@ -176,18 +218,20 @@ def result_sheets(request):
                     overall_grade = 'D'
                 else:
                     overall_grade = 'F'
-                
-                result_sheets.append({
-                    'session': term_results.first().session,
-                    'term': term_results.first().term,
-                    'student_class': term_results.first().student_class,
-                    'term_results': term_results,
-                    'total_score': total_score,
-                    'total_possible': total_possible,
-                    'overall_percentage': round(overall_percentage, 2),
-                    'overall_grade': overall_grade,
-                    'subject_count': term_results.count(),
-                })
+
+                first_tr = term_results.first()
+                if first_tr is not None:
+                    result_sheets.append({
+                        'session': first_tr.session,
+                        'term': first_tr.term,
+                        'student_class': first_tr.student_class,
+                        'term_results': term_results,
+                        'total_score': total_score,
+                        'total_possible': total_possible,
+                        'overall_percentage': round(overall_percentage, 2),
+                        'overall_grade': overall_grade,
+                        'subject_count': term_results.count(),
+                    })
         
         context = {
             'student_profile': student_profile,
@@ -217,26 +261,26 @@ def print_result_sheet(request, session_id, term_id):
         student_profile = StudentProfile.objects.get(user=request.user)
         session = get_object_or_404(AcademicSession, id=session_id)
         term = get_object_or_404(AcademicTerm, id=term_id)
-        
+
         # Get term results
         term_results = TermResult.objects.filter(
             student=student_profile,
             session=session,
             term=term
         ).select_related('subject', 'student_class').order_by('subject__name')
-        
+
         if not term_results.exists():
             messages.error(request, 'No results found for the selected session and term.')
             return HttpResponseRedirect(reverse('students:result_sheets'))
-        
+
         # Create PDF
         buffer = BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=A4)
-        
+
         # Build content
         content = []
         styles = getSampleStyleSheet()
-        
+
         # School header
         title_style = ParagraphStyle(
             'CustomTitle',
@@ -245,20 +289,22 @@ def print_result_sheet(request, session_id, term_id):
             spaceAfter=30,
             alignment=1  # Center
         )
-        
+
         content.append(Paragraph("GLAD TIDINGS SCHOOL", title_style))
         content.append(Paragraph("STUDENT RESULT SHEET", styles['Heading2']))
         content.append(Spacer(1, 20))
-        
+
         # Student info
+        first_tr = term_results.first()
+        term_label = dict(AcademicTerm.TERM_CHOICES).get(term.name, term.name)
         student_info = [
             ['Student Name:', student_profile.user.get_full_name()],
             ['Admission Number:', student_profile.admission_number or 'N/A'],
-            ['Class:', term_results.first().student_class.name],
+            ['Class:', first_tr.student_class.name if first_tr else 'N/A'],
             ['Session:', session.name],
-            ['Term:', term.get_name_display()],
+            ['Term:', term_label],
         ]
-        
+
         info_table = Table(student_info, colWidths=[2*inch, 3*inch])
         info_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
@@ -266,16 +312,16 @@ def print_result_sheet(request, session_id, term_id):
             ('FONTSIZE', (0, 0), (-1, -1), 12),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
         ]))
-        
+
         content.append(info_table)
         content.append(Spacer(1, 30))
-        
+
         # Results table
         data = [['Subject', 'Score', 'Grade', 'Remarks']]
-        
+
         total_score = 0
         total_possible = 0
-        
+
         for result in term_results:
             data.append([
                 result.subject.name,
@@ -285,7 +331,7 @@ def print_result_sheet(request, session_id, term_id):
             ])
             total_score += result.total_score
             total_possible += result.total_possible
-        
+
         # Add totals
         overall_percentage = (total_score / total_possible * 100) if total_possible > 0 else 0
         if overall_percentage >= 80:
@@ -298,10 +344,10 @@ def print_result_sheet(request, session_id, term_id):
             overall_grade = 'D'
         else:
             overall_grade = 'F'
-        
+
         data.append(['', '', '', ''])  # Empty row
         data.append(['TOTAL', f"{total_score}/{total_possible}", overall_grade, f"{overall_percentage:.1f}%"])
-        
+
         results_table = Table(data, colWidths=[2.5*inch, 1.5*inch, 1*inch, 2*inch])
         results_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
@@ -315,25 +361,24 @@ def print_result_sheet(request, session_id, term_id):
             ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
             ('GRID', (0, 0), (-1, -1), 1, colors.black)
         ]))
-        
+
         content.append(results_table)
         content.append(Spacer(1, 50))
-        
+
         # Footer
         footer_text = f"Generated on: {timezone.now().strftime('%B %d, %Y')}"
         content.append(Paragraph(footer_text, styles['Normal']))
-        
+
         # Build PDF
         doc.build(content)
-        
+
         # Return response
         buffer.seek(0)
         response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
-        filename = f"{student_profile.user.get_full_name()}_{session.name}_{term.get_name_display()}_results.pdf"
+        filename = f"{student_profile.user.get_full_name()}_{session.name}_{term_label}_results.pdf"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        
+
         return response
-        
     except StudentProfile.DoesNotExist:
         messages.error(request, 'Student profile not found.')
         return HttpResponseRedirect(reverse('students:result_sheets'))

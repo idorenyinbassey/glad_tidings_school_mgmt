@@ -1,6 +1,77 @@
 {% extends 'core/base.html' %}
-
+{% load static %}
 {% block content %}
+<section class="py-5 bg-light">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-6 mb-4 mb-md-0">
+        <h1 class="mb-3">Our Academics</h1>
+        <p class="lead">Step by Step to Academic Excellence.</p>
+        <p>
+          At Glad Tidings College, our academic program is built on a strong
+          foundation of core subjects, experienced teachers, and a supportive
+          learning environment that nurtures the whole child. We combine
+          rigorous standards with individualized attention to help every
+          student thrive.
+        </p>
+        <div class="mt-3">
+          <a href="{% url 'admission' %}" class="btn btn-primary me-2">Apply for Admission</a>
+          <a href="{% url 'contact_us' %}" class="btn btn-outline-secondary">Contact Us</a>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <img src="{% static 'images/landing/hero_2.jpg' %}" class="img-fluid rounded shadow" alt="Academics" />
+      </div>
+    </div>
+  </div>
+    </section>
+
+  <section class="py-5">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title"><i class="fas fa-book-open me-2 text-primary"></i>Core Curriculum</h5>
+              <p class="card-text">English, Mathematics, Sciences, Social Sciences, and Languages delivered with excellence.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title"><i class="fas fa-flask me-2 text-success"></i>STEM & Labs</h5>
+              <p class="card-text">Hands-on learning in well-equipped science and computer laboratories.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title"><i class="fas fa-music me-2 text-warning"></i>Arts & Clubs</h5>
+              <p class="card-text">Creative programs and extracurriculars that develop talents and leadership.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+    <section class="py-5 bg-light">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-7">
+          <h3 class="mb-3">Ready to learn more?</h3>
+          <p>Parents and students can explore detailed academic resources inside the school portal.</p>
+        </div>
+        <div class="col-md-5 text-md-end">
+          <a href="{% url 'portal' %}" class="btn btn-outline-primary">Go to Portal</a>
+        </div>
+      </div>
+    </div>
+    </section>
+
+    <!-- Detailed Academics Sections -->
 <!-- Hero Section -->
 <div class="container-fluid bg-primary text-white py-5 mb-5">
     <div class="container">
@@ -10,7 +81,7 @@
                 <p class="lead">A comprehensive curriculum designed to inspire and challenge students at Glad Tidings School</p>
             </div>
             <div class="col-lg-4">
-                <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=400&h=300" class="img-fluid rounded shadow-lg" alt="Students studying">
+                <img src="{% static 'images/academics/hero_academics.jpg' %}" class="img-fluid rounded shadow-lg" alt="Students studying">
             </div>
         </div>
     </div>
@@ -174,7 +245,7 @@
     <div class="row">
         <div class="col-lg-4 col-md-6 mb-4">
             <div class="card border-0 shadow">
-                <img src="https://images.unsplash.com/photo-1570975640108-2170cb7a19f2?auto=format&fit=crop&q=80&w=600&h=400" class="card-img-top" alt="School Library">
+                <img src="{% static 'images/academics/library.jpg' %}" class="card-img-top" alt="School Library">
                 <div class="card-body">
                     <h4>Modern Library</h4>
                     <p>Our extensive library houses over 10,000 books, digital resources, and quiet study areas to support research and independent learning.</p>
@@ -183,7 +254,7 @@
         </div>
         <div class="col-lg-4 col-md-6 mb-4">
             <div class="card border-0 shadow">
-                <img src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&q=80&w=600&h=400" class="card-img-top" alt="Science Lab">
+                <img src="{% static 'images/academics/science_lab.jpg' %}" class="card-img-top" alt="Science Lab">
                 <div class="card-body">
                     <h4>Science Laboratories</h4>
                     <p>Fully-equipped physics, chemistry, and biology labs provide hands-on experience for scientific exploration and experimentation.</p>
@@ -192,7 +263,7 @@
         </div>
         <div class="col-lg-4 col-md-6 mb-4">
             <div class="card border-0 shadow">
-                <img src="https://images.unsplash.com/photo-1602495431143-f5e759d1deb7?auto=format&fit=crop&q=80&w=600&h=400" class="card-img-top" alt="Computer Lab">
+                <img src="{% static 'images/academics/computer_lab.jpg' %}" class="card-img-top" alt="Computer Lab">
                 <div class="card-body">
                     <h4>Computer Laboratory</h4>
                     <p>Our modern computer labs are equipped with the latest hardware and software to develop students' digital literacy and programming skills.</p>
@@ -201,7 +272,7 @@
         </div>
         <div class="col-lg-4 col-md-6 mb-4">
             <div class="card border-0 shadow">
-                <img src="https://images.unsplash.com/photo-1495465798138-718f86d1a4bc?auto=format&fit=crop&q=80&w=600&h=400" class="card-img-top" alt="Classroom">
+                <img src="{% static 'images/academics/classroom.jpg' %}" class="card-img-top" alt="Classroom">
                 <div class="card-body">
                     <h4>Smart Classrooms</h4>
                     <p>Our classrooms are equipped with interactive whiteboards, projectors, and internet connectivity to enhance the learning experience.</p>
@@ -210,7 +281,7 @@
         </div>
         <div class="col-lg-4 col-md-6 mb-4">
             <div class="card border-0 shadow">
-                <img src="https://images.unsplash.com/photo-1598620617149-ce7b3ce7042d?auto=format&fit=crop&q=80&w=600&h=400" class="card-img-top" alt="Art Studio">
+                <img src="{% static 'images/academics/art_studio.jpg' %}" class="card-img-top" alt="Art Studio">
                 <div class="card-body">
                     <h4>Creative Arts Studio</h4>
                     <p>A dedicated space for visual and performing arts, equipped with tools and materials for artistic expression and creativity.</p>
@@ -219,7 +290,7 @@
         </div>
         <div class="col-lg-4 col-md-6 mb-4">
             <div class="card border-0 shadow">
-                <img src="https://images.unsplash.com/photo-1536337005238-94b997371b40?auto=format&fit=crop&q=80&w=600&h=400" class="card-img-top" alt="Assembly Hall">
+                <img src="{% static 'images/academics/assembly_hall.jpg' %}" class="card-img-top" alt="Assembly Hall">
                 <div class="card-body">
                     <h4>Assembly Hall</h4>
                     <p>A multi-purpose hall used for school assemblies, presentations, debates, and cultural events that enhance the learning experience.</p>
@@ -308,7 +379,7 @@
     <div class="row">
         <div class="col-lg-3 col-md-6 mb-4">
             <div class="card border-0 shadow h-100">
-                <img src="https://images.unsplash.com/photo-1526675896736-ea8d7c7627dd?auto=format&fit=crop&q=80&w=600&h=400" class="card-img-top" alt="Sports">
+                <img src="{% static 'images/academics/sports.jpg' %}" class="card-img-top" alt="Sports">
                 <div class="card-body">
                     <h4>Sports</h4>
                     <p>Our sports program includes football, basketball, volleyball, track and field, swimming, and table tennis.</p>
@@ -317,7 +388,7 @@
         </div>
         <div class="col-lg-3 col-md-6 mb-4">
             <div class="card border-0 shadow h-100">
-                <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=600&h=400" class="card-img-top" alt="Clubs">
+                <img src="{% static 'images/academics/clubs.jpg' %}" class="card-img-top" alt="Clubs">
                 <div class="card-body">
                     <h4>Clubs & Societies</h4>
                     <p>Students can join various clubs like Debate, Science, Art, Literary, Drama, and Environmental Conservation.</p>
@@ -326,7 +397,7 @@
         </div>
         <div class="col-lg-3 col-md-6 mb-4">
             <div class="card border-0 shadow h-100">
-                <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&q=80&w=600&h=400" class="card-img-top" alt="Music">
+                <img src="{% static 'images/academics/music.jpg' %}" class="card-img-top" alt="Music">
                 <div class="card-body">
                     <h4>Music & Performing Arts</h4>
                     <p>Our music program offers choir, instrumental lessons, and opportunities to participate in concerts and festivals.</p>
@@ -335,7 +406,7 @@
         </div>
         <div class="col-lg-3 col-md-6 mb-4">
             <div class="card border-0 shadow h-100">
-                <img src="https://images.unsplash.com/photo-1563841930606-67e2bce48b78?auto=format&fit=crop&q=80&w=600&h=400" class="card-img-top" alt="Leadership">
+                <img src="{% static 'images/academics/leadership.jpg' %}" class="card-img-top" alt="Leadership">
                 <div class="card-body">
                     <h4>Leadership Programs</h4>
                     <p>Through prefect system, student council, and community service projects, students develop leadership skills.</p>

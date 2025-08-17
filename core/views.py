@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseNotFound, HttpResponseServerError
+from django.http import HttpResponseNotFound, HttpResponseServerError, HttpResponseForbidden
 from django.template import loader
 from django.conf import settings
 from django.core.paginator import Paginator
@@ -147,7 +147,7 @@ def custom_403(request, exception):
         'user': request.user,
     }
     
-    return HttpResponseServerError(template.render(context, request))
+    return HttpResponseForbidden(template.render(context, request))
 
 
 def get_admin_dashboard_context():

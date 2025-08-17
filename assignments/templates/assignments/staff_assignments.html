@@ -1,0 +1,58 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center">
+    <h1>Manage Assignments</h1>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header">Create Assignment</div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-6">{{ form.title.label_tag }} {{ form.title }}</div>
+          <div class="col-md-6">{{ form.subject.label_tag }} {{ form.subject }}</div>
+          <div class="col-md-6">{{ form.assigned_class.label_tag }} {{ form.assigned_class }}</div>
+          <div class="col-md-6">{{ form.due_date.label_tag }} {{ form.due_date }}</div>
+          <div class="col-12">{{ form.description.label_tag }} {{ form.description }}</div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Create</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Existing Assignments</div>
+    <ul class="list-group list-group-flush">
+      {% for a in assignments %}
+        <li class="list-group-item">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <strong>{{ a.title }}</strong>
+              <div class="small text-muted">Subject: {{ a.subject }} • Class: {{ a.assigned_class }} • Due: {{ a.due_date }}</div>
+            </div>
+          </div>
+          {% with subs=a.submissions.all %}
+            {% if subs %}
+              <div class="mt-2">
+                <strong>Submissions</strong>
+                <ul class="list-group">
+                  {% for s in subs %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      <span>{{ s.student.user.get_full_name }} — {{ s.submitted_at }} {% if s.grade %}(Grade: {{ s.grade }}){% endif %}</span>
+                      <a class="btn btn-sm btn-outline-primary" href="{% url 'assignments:grade_submission' s.id %}">Grade</a>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+          {% endwith %}
+        </li>
+      {% empty %}
+        <li class="list-group-item">No assignments.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

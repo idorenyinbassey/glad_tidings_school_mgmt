@@ -1,0 +1,16 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h1>Staff Timetable</h1>
+  {% if timetable %}
+    <ul class="list-group">
+      {% for item in timetable %}
+        <li class="list-group-item">{{ item }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="alert alert-info">No timetable entries.</div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -7,6 +7,11 @@ class StudentProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='student_profile')
     admission_number = models.CharField(max_length=30, unique=True)
     date_of_birth = models.DateField()
+    GENDER_CHOICES = (
+        ('male', 'Male'),
+        ('female', 'Female'),
+    )
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='male')
     address = models.TextField(blank=True)
     guardian_name = models.CharField(max_length=100, blank=True)
     guardian_contact = models.CharField(max_length=30, blank=True)
