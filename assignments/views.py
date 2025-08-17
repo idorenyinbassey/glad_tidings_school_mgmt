@@ -57,7 +57,12 @@ def submit_assignment(request, assignment_id):
         if form.is_valid():
             submission = form.save(commit=False)
             from students.models import StudentProfile
-            submission.student = get_object_or_404(StudentProfile, user=request.user)
+            # Gracefully handle users without a student profile (e.g., superusers)
+            student_profile = StudentProfile.objects.filter(user=request.user).first()
+            if not student_profile:
+                messages.error(request, 'You need a student profile to submit assignments.')
+                return redirect('assignments:student_assignments')
+            submission.student = student_profile
             submission.assignment = assignment
             submission.save()
             messages.success(request, 'Submission uploaded.')

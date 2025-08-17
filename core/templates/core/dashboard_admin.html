@@ -283,6 +283,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 borderWidth: 2,
                 fill: true,
                 tension: 0.3
+            }, {
+                label: 'Attendance Students (%)',
+                data: chartData.attendance_students || [0, 0, 0, 0, 0, 0],
+                borderColor: 'rgba(40, 167, 69, 1)',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3,
+                yAxisID: 'y1'
+            }, {
+                label: 'Attendance Staff (%)',
+                data: chartData.attendance_staff || [0, 0, 0, 0, 0, 0],
+                borderColor: 'rgba(255, 193, 7, 1)',
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3,
+                yAxisID: 'y1'
             }]
         },
         options: {
@@ -295,8 +313,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            let value = context.raw;
-                            return context.dataset.label + ': ₦' + value.toLocaleString('en-NG');
+                            const value = context.raw;
+                            // Use currency for left axis datasets, percentage for right axis
+                            const isPercent = context.dataset.yAxisID === 'y1' || /%\)/.test(context.dataset.label);
+                            if (isPercent) {
+                                return context.dataset.label + ': ' + (Number(value) || 0).toFixed(0) + '%';
+                            }
+                            return context.dataset.label + ': ₦' + (Number(value) || 0).toLocaleString('en-NG');
                         }
                     }
                 }
@@ -307,6 +330,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     ticks: {
                         callback: function(value) {
                             return '₦' + (value / 1000).toFixed(0) + 'K';
+                        }
+                    }
+                },
+                y1: {
+                    beginAtZero: true,
+                    max: 100,
+                    position: 'right',
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
                         }
                     }
                 }
