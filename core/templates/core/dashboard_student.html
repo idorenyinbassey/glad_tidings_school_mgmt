@@ -162,11 +162,11 @@
                         <div class="card-body">
                             <div class="text-center mb-3">
                                 <div class="progress" style="height: 20px;">
-                                    <div class="progress-bar bg-success" role="progressbar" style="width: 92%;" aria-valuenow="92" aria-valuemin="0" aria-valuemax="100">92%</div>
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ attendance_percent|default:0 }}%;" aria-valuenow="{{ attendance_percent|default:0 }}" aria-valuemin="0" aria-valuemax="100">{{ attendance_percent|default:0 }}%</div>
                                 </div>
                                 <small class="text-muted">Term attendance percentage</small>
                             </div>
-                            <p>Days Present: 46<br>Days Absent: 4</p>
+                <p>Days Present: {{ days_present|default:0 }}<br>Days Absent: {{ days_absent|default:0 }}</p>
                         </div>
                         <div class="card-footer bg-transparent border-top-0">
                             <a href="{% url 'students:attendance' %}" class="btn btn-sm btn-outline-danger">View details</a>

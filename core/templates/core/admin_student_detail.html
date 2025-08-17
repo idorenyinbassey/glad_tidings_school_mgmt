@@ -1,0 +1,41 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <a href="{% url 'admin_students_list' %}" class="btn btn-link">← Back to list</a>
+  <h1 class="h4 mb-3">{{ student.user.get_full_name }} ({{ student.admission_number }})</h1>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Profile</h5>
+          <p><strong>Gender:</strong> {{ student.get_gender_display }}</p>
+          <p><strong>Address:</strong> {{ student.address|default:'-' }}</p>
+          <p><strong>Guardian:</strong> {{ student.guardian_name|default:'-' }}</p>
+          <p><strong>Guardian Contact:</strong> {{ student.guardian_contact|default:'-' }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Attendance (recent)</h5>
+          <p><strong>Attendance %:</strong> {{ attendance_percent }}%</p>
+          {% if recent_attendance %}
+          <ul class="list-group">
+            {% for rec in recent_attendance %}
+            <li class="list-group-item d-flex justify-content-between">
+              <span>{{ rec.date|date:"M d, Y" }}</span>
+              <span class="badge {% if rec.present %}bg-success{% else %}bg-danger{% endif %}">{% if rec.present %}Present{% else %}Absent{% endif %}</span>
+            </li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <div class="text-muted">No recent attendance.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

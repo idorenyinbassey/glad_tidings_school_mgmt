@@ -115,11 +115,15 @@ def results(request):
 
 
 @login_required
-@role_required(['student'])
 def attendance(request):
+    # Canonical attendance is handled in core. If user isn't a student, redirect there.
+    user = request.user
+    if not hasattr(user, 'student_profile'):
+        return HttpResponseRedirect(reverse('attendance'))
+
     # Show logged-in student's attendance with optional date filters
     try:
-        student_profile = StudentProfile.objects.get(user=request.user)
+        student_profile = StudentProfile.objects.get(user=user)
 
         # Optional filters: start_date and end_date in YYYY-MM-DD
         start_date = request.GET.get('start_date')
@@ -155,16 +159,8 @@ def attendance(request):
             'end_date': end_date or '',
         }
     except StudentProfile.DoesNotExist:
-        messages.error(request, 'Student profile not found.')
-        context = {
-            'records': [],
-            'total_days': 0,
-            'days_present': 0,
-            'days_absent': 0,
-            'attendance_percent': 0.0,
-            'start_date': '',
-            'end_date': '',
-        }
+        # If no profile, use core attendance (admin/staff)
+        return HttpResponseRedirect(reverse('attendance'))
 
     return render(request, 'students/attendance.html', context)
 

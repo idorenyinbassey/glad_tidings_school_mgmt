@@ -10,9 +10,10 @@ import logging
 import json
 from django.contrib import messages
 from .forms import AdmissionApplicationForm, ContactForm
-from .models import InboxMessage
+from .models import InboxMessage  # noqa: F401 (potential future use)
 
 logger = logging.getLogger(__name__)
+
 
 def landing_page(request):
     """Landing page with latest news and upcoming events using core CMS models."""
@@ -35,8 +36,10 @@ def landing_page(request):
         {'latest_news': latest_news, 'upcoming_events': upcoming_events}
     )
 
+
 def about_us(request):
     return render(request, 'core/about_us.html')
+
 
 def admission(request):
     # Handle admission application submission
@@ -59,14 +62,17 @@ def admission(request):
         form = AdmissionApplicationForm()
     return render(request, 'core/admission.html', {'admission_form': form})
 
+
 def academics_page(request):
     return render(request, 'core/academics.html')
+
 
 def portal(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
     else:
         return redirect('login')
+
 
 @login_required
 def dashboard(request):
@@ -152,17 +158,18 @@ def custom_403(request, exception):
 
 def get_admin_dashboard_context():
     """Get live data for admin dashboard"""
-    from django.db.models import Sum, Count, Avg
+    from django.db.models import Sum
     from students.models import StudentProfile
     from staff.models import StaffProfile
+    from students.models import AttendanceRecord as StudentAttendance
+    from staff.models import StaffAttendance
     from accounting.models import TuitionFee, Payment, Expense
-    from django.contrib.auth.models import User
-    from datetime import datetime, timedelta
+    from datetime import timedelta
     from django.utils import timezone
     
     today = timezone.now().date()
     current_month_start = today.replace(day=1)
-    current_year_start = today.replace(month=1, day=1)
+    # current_year_start = today.replace(month=1, day=1)
     
     # Student Statistics
     total_students = StudentProfile.objects.filter(user__is_active=True).count()
@@ -195,11 +202,11 @@ def get_admin_dashboard_context():
     for payment in recent_payments:
         days_ago = (today - payment.payment_date).days
         time_ago = f"{days_ago} day{'s' if days_ago != 1 else ''} ago" if days_ago > 0 else "Today"
-        recent_activities.append({
-            'time': time_ago,
-            'content': f'Fee payment of ₦{payment.amount:,.0f} received from {payment.tuition_fee.student.user.get_full_name()}',
-            'type': 'payment'
-        })
+        pay_msg = (
+            f"Fee payment of ₦{payment.amount:,.0f} received from "
+            f"{payment.tuition_fee.student.user.get_full_name()}"
+        )
+        recent_activities.append({'time': time_ago, 'content': pay_msg, 'type': 'payment'})
     
     # Recent expenses
     recent_expenses = Expense.objects.order_by('-date')[:2]
@@ -215,7 +222,8 @@ def get_admin_dashboard_context():
     # Recent registrations
     recent_students = StudentProfile.objects.order_by('-created_at')[:2]
     for student in recent_students:
-        created_date = student.created_at.date() if getattr(student, 'created_at', None) else today
+        created_at = getattr(student, 'created_at', None)
+        created_date = created_at.date() if created_at else today
         days_ago = (today - created_date).days
         time_ago = f"{days_ago} day{'s' if days_ago != 1 else ''} ago" if days_ago > 0 else "Today"
         recent_activities.append({
@@ -232,8 +240,13 @@ def get_admin_dashboard_context():
         status__in=['unpaid', 'partial']
     ).values('student').distinct().count()
     
-    # Attendance rate (placeholder - would need actual attendance data)
-    attendance_rate = 87  # This would be calculated from actual attendance records
+    # Attendance rate (last 30 days, combined students + staff)
+    last_30 = today - timedelta(days=30)
+    stud_30 = StudentAttendance.objects.filter(date__gte=last_30, date__lte=today)
+    staff_30 = StaffAttendance.objects.filter(date__gte=last_30, date__lte=today)
+    total_30 = stud_30.count() + staff_30.count()
+    present_30 = stud_30.filter(present=True).count() + staff_30.filter(present=True).count()
+    attendance_rate = round((present_30 / total_30) * 100, 1) if total_30 else 0
     
     # Pending tasks (based on actual data)
     pending_tasks = []
@@ -276,7 +289,9 @@ def get_admin_dashboard_context():
         'months': [],
         'revenue': [],
         'expenses': [],
-        'students': []
+        'students': [],
+        'attendance_students': [],
+        'attendance_staff': [],
     }
     
     for i in range(5, -1, -1):
@@ -287,19 +302,31 @@ def get_admin_dashboard_context():
             payment_date__gte=month_date,
             payment_date__lte=month_end
         ).aggregate(total=Sum('amount'))['total'] or 0
-        
+
         month_expenses = Expense.objects.filter(
             date__gte=month_date,
             date__lte=month_end
         ).aggregate(total=Sum('amount'))['total'] or 0
-        
+
         # Student count (approximate - would need historical data)
-        month_students = total_students  # Simplified - in reality, track historical data
-        
+        month_students = total_students  # Simplified
+
+        # Attendance percentages by month
+        stud_month_qs = StudentAttendance.objects.filter(date__gte=month_date, date__lte=month_end)
+        staff_month_qs = StaffAttendance.objects.filter(date__gte=month_date, date__lte=month_end)
+        stud_total = stud_month_qs.count()
+        stud_present = stud_month_qs.filter(present=True).count()
+        staff_total = staff_month_qs.count()
+        staff_present = staff_month_qs.filter(present=True).count()
+        stud_pct = round((stud_present / stud_total) * 100, 1) if stud_total else 0
+        staff_pct = round((staff_present / staff_total) * 100, 1) if staff_total else 0
+
         chart_data['months'].append(month_date.strftime('%b'))
         chart_data['revenue'].append(float(month_revenue))
         chart_data['expenses'].append(float(month_expenses))
         chart_data['students'].append(month_students)
+        chart_data['attendance_students'].append(stud_pct)
+        chart_data['attendance_staff'].append(staff_pct)
     
     return {
         'total_students': total_students,
@@ -321,34 +348,36 @@ def get_admin_dashboard_context():
 def get_student_dashboard_context(user):
     """Get live data for student dashboard"""
     try:
-        from students.models import StudentProfile
+        from students.models import StudentProfile, AttendanceRecord
         from results.models import StudentResult
-        
+
         # Get student profile
         student_profile = StudentProfile.objects.get(user=user)
-        
-        # Get recent results (last 5)
-        recent_results = StudentResult.objects.filter(
-            student=student_profile
-        ).select_related(
-            'subject', 'assessment', 'session', 'term'
-        ).order_by('-entered_at')[:5]
-        
+
+        # Recent results (last 5)
+        recent_results = (
+            StudentResult.objects.filter(student=student_profile)
+            .select_related('subject', 'assessment', 'session', 'term')
+            .order_by('-entered_at')[:5]
+        )
+
+        # Attendance summary
+        att_qs = AttendanceRecord.objects.filter(student=student_profile)
+        total_days = att_qs.count()
+        days_present = att_qs.filter(present=True).count()
+        days_absent = att_qs.filter(present=False).count()
+        attendance_percent = round((days_present / total_days) * 100, 1) if total_days else 0
+
         return {
             'student_profile': student_profile,
             'recent_results': recent_results,
-        }
-    except StudentProfile.DoesNotExist:
-        return {
-            'student_profile': None,
-            'recent_results': [],
+            'attendance_percent': attendance_percent,
+            'days_present': days_present,
+            'days_absent': days_absent,
         }
     except Exception as e:
         logger.error(f"Error getting student dashboard context: {e}")
-        return {
-            'student_profile': None,
-            'recent_results': [],
-        }
+        return {'student_profile': None, 'recent_results': []}
 
 
 # Public listing pages

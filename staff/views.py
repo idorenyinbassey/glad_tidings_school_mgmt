@@ -34,8 +34,10 @@ def performance(request):
  
 @login_required
 def attendance(request):
-    # In a real application, you would fetch attendance data for the staff to manage
-    context = {
-        'attendance_data': []
-    }
-    return render(request, 'staff/attendance.html', context)
+    # Canonical attendance is handled in core.
+    user = request.user
+    if not hasattr(user, 'staff_profile'):
+        return HttpResponseRedirect(reverse('attendance'))
+
+    # Keep the staff page for any staff-specific extras if needed; otherwise, link to core.
+    return HttpResponseRedirect(reverse('attendance'))
