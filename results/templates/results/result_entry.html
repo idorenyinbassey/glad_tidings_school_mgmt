@@ -209,54 +209,42 @@
 {% endblock %}
 
 {% block extra_js %}
+</script>
 <script>
-$(document).ready(function() {
-    // Update max score when assessment changes
-    $('#assessment').change(function() {
-        const maxScore = $(this).find(':selected').data('max-score');
-        if (maxScore) {
-            $('#maxScore').text(maxScore);
-            $('#score').attr('max', maxScore);
-        } else {
-            $('#maxScore').text('--');
-            $('#score').removeAttr('max');
-        }
-    });
+// Production-ready: Populate student dropdown when class changes
+document.addEventListener("DOMContentLoaded", function() {
+    const classEl = document.getElementById("student_class");
+    const studentEl = document.getElementById("student");
+    if (!classEl || !studentEl) return;
 
-    // Load students when class changes
-    $('#student_class').change(function() {
-        const classId = $(this).val();
-        if (classId) {
-            $.ajax({
-                url: '{% url "results:get_class_students" %}',
-                data: {'class_id': classId},
-                success: function(data) {
-                    const studentSelect = $('#student');
-                    studentSelect.empty().append('<option value="">Select Student</option>');
-                    data.students.forEach(function(student) {
-                        studentSelect.append(`<option value="${student.id}">${student.name}</option>`);
-                    });
-                },
-                error: function() {
-                    alert('Error loading students. Please try again.');
-                }
-            });
-        } else {
-            $('#student').empty().append('<option value="">Select Student</option>');
-        }
-    });
-
-    // Form validation
-    $('#resultForm').submit(function(e) {
-        const score = parseFloat($('#score').val());
-        const maxScore = parseFloat($('#assessment').find(':selected').data('max-score'));
-        
-        if (score > maxScore) {
-            e.preventDefault();
-            alert(`Score cannot exceed ${maxScore} marks.`);
-            return false;
-        }
+    classEl.addEventListener("change", function() {
+        const classId = classEl.value;
+        studentEl.innerHTML = '<option value="">Select Student</option>';
+        if (!classId) return;
+        fetch(`/results/api/class-students/?class_id=${encodeURIComponent(classId)}`, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (Array.isArray(data.students)) {
+                data.students.forEach(function(s) {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = s.name;
+                    studentEl.appendChild(opt);
+                });
+            }
+        })
+        .catch(() => {
+            // Optionally show a user-friendly error
+        });
     });
 });
+</script>
 </script>
 {% endblock %}

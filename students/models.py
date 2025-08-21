@@ -17,6 +17,15 @@ class StudentProfile(models.Model):
     guardian_contact = models.CharField(max_length=30, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    current_class = models.ForeignKey(
+        'results.StudentClass',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='students',
+        help_text='Current class/grade of the student.'
+    )
     # Add more fields as needed
 
     def clean(self):
@@ -48,7 +57,14 @@ class AcademicStatus(models.Model):
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='academic_statuses')
     session = models.CharField(max_length=20)
     term = models.CharField(max_length=20)
-    current_class = models.CharField(max_length=50)
+    current_class = models.ForeignKey(
+        'results.StudentClass',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='academic_statuses',
+        help_text='Class/grade for this academic status record.'
+    )
     promoted = models.BooleanField(default=False)
     remarks = models.TextField(blank=True)
     # Add more fields as needed

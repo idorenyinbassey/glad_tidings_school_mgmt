@@ -110,6 +110,16 @@
         </div>
         
         <div class="col-md-4">
+            {# Profile Picture Display #}
+            {% if profile.photo %}
+                <div class="text-center mb-3">
+                    <img src="{{ profile.photo.url }}" alt="Profile Picture" class="img-thumbnail" style="max-width: 200px;">
+                </div>
+            {% else %}
+                <div class="text-center mb-3">
+                    <img src="{% static 'images/default_profile.png' %}" alt="No Profile Picture" class="img-thumbnail" style="max-width: 200px;">
+                </div>
+            {% endif %}
             <div class="card">
                 <div class="card-header bg-info text-white">
                     <h5 class="card-title mb-0">Account Information</h5>

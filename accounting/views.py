@@ -294,10 +294,10 @@ def fees(request):
                 fee_structure.append({
                     'class_level': class_name,
                     'tuition_fee': avg_amount,
-                    'books': avg_amount * 0.2,  # 20% of tuition
-                    'uniform': avg_amount * 0.15,  # 15% of tuition  
-                    'development': avg_amount * 0.1,  # 10% of tuition
-                    'total': avg_amount * 1.45  # Total with extras
+                    'books': avg_amount * Decimal('0.2'),  # 20% of tuition
+                    'uniform': avg_amount * Decimal('0.15'),  # 15% of tuition  
+                    'development': avg_amount * Decimal('0.1'),  # 10% of tuition
+                    'total': avg_amount * Decimal('1.45')  # Total with extras
                 })
         else:
             # Default fee structure if no data exists
@@ -320,13 +320,14 @@ def fees(request):
             ]
             
             for class_name, tuition in default_classes:
+                tuition = Decimal(str(tuition))
                 fee_structure.append({
                     'class_level': class_name,
                     'tuition_fee': tuition,
-                    'books': tuition * 0.2,
-                    'uniform': tuition * 0.15,
-                    'development': tuition * 0.1,
-                    'total': tuition * 1.45
+                    'books': tuition * Decimal('0.2'),
+                    'uniform': tuition * Decimal('0.15'),
+                    'development': tuition * Decimal('0.1'),
+                    'total': tuition * Decimal('1.45')
                 })
         
         context['fee_structure'] = fee_structure
@@ -566,13 +567,13 @@ def fee_create(request):
 def fee_detail(request, pk):
     """View fee details and associated payments"""
     fee = get_object_or_404(TuitionFee, pk=pk)
-    payments = fee.payments.all().order_by('-date')
+    payments = fee.payments.all().order_by('-payment_date')
     
     context = {
         'fee': fee,
         'payments': payments,
-        'remaining_amount': fee.remaining_amount(),
-        'payment_percentage': fee.payment_percentage()
+        'remaining_amount': fee.amount_outstanding,
+        'payment_percentage': fee.payment_percentage
     }
     
     return render(request, 'accounting/fee_detail.html', context)
@@ -612,8 +613,8 @@ def payment_create(request, fee_pk=None):
     
     if fee_pk:
         fee = get_object_or_404(TuitionFee, pk=fee_pk)
-        initial_data['fee'] = fee
-        initial_data['amount'] = fee.remaining_amount()
+    initial_data['fee'] = fee
+    initial_data['amount'] = fee.amount_outstanding
     
     if request.method == 'POST':
         form = PaymentForm(request.POST)

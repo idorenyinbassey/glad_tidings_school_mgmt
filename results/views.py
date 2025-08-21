@@ -147,37 +147,106 @@ def handle_result_entry(request):
     return redirect('results:result_entry')
 
 
-@login_required
-@role_required(['staff', 'admin'])
 def get_class_students(request):
-    """AJAX endpoint to get students in a class"""
-    class_id = request.GET.get('class_id')
+    """AJAX endpoint to get students in a class.
     
+    Returns JSON response with students for the specified class.
+    Handles authentication and provides fallbacks for data migration scenarios.
+    """
+    class_id = request.GET.get('class_id')
+    debug_mode = request.GET.get('debug') == '1'
+
+    # Determine if caller expects JSON / is AJAX
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', '')
+
+    # Auth & role checks (return JSON errors for AJAX requests)
+    user = getattr(request, 'user', None)
+    if not user or not user.is_authenticated:
+        if is_ajax:
+            return JsonResponse({
+                'detail': 'Authentication required',
+                'debug': {
+                    'authenticated': False,
+                    'cookies_present': bool(request.META.get('HTTP_COOKIE'))
+                } if debug_mode else None
+            }, status=401)
+        return redirect('login')
+
+    if not (hasattr(user, 'role') and user.role in ['staff', 'admin']) and not user.is_superuser:
+        if is_ajax:
+            return JsonResponse({
+                'detail': 'Permission denied',
+                'debug': {
+                    'user_role': getattr(user, 'role', None)
+                } if debug_mode else None
+            }, status=403)
+        return HttpResponse("You don't have permission to access this page.", status=403)
+
     if not class_id:
         return JsonResponse({'error': 'Class ID is required'}, status=400)
-    
+
     try:
         student_class = get_object_or_404(StudentClass, id=class_id)
-        
-        # Get students in the class - for now, we'll get all active students
-        # You may need to add a proper class assignment system later
+
+        # Prefer direct FK on StudentProfile
         students = StudentProfile.objects.filter(
+            current_class=student_class,
             user__is_active=True
         ).select_related('user').order_by('user__last_name', 'user__first_name')
-        
-        students_data = []
-        for student in students:
-            students_data.append({
+
+        # Fallback to AcademicStatus if no direct FK
+        if not students.exists():
+            students = StudentProfile.objects.filter(
+                academic_statuses__current_class=student_class,
+                user__is_active=True
+            ).select_related('user').distinct().order_by('user__last_name', 'user__first_name')
+
+        students_data = [
+            {
                 'id': student.id,  # type: ignore[attr-defined]
                 'name': student.user.get_full_name(),
                 'admission_number': student.admission_number or 'N/A'
-            })
+            }
+            for student in students
+        ]
+
+        fallback_used = False
+        query_used = 'direct_fk'
         
-        return JsonResponse({
+        if not students_data:
+            fallback_used = True
+            query_used = 'all_active_fallback'
+            students = StudentProfile.objects.filter(user__is_active=True).select_related('user').order_by('user__last_name', 'user__first_name')
+            students_data = [
+                {'id': s.id, 'name': s.user.get_full_name(), 'admission_number': s.admission_number or 'N/A'}
+                for s in students
+            ]
+        elif not StudentProfile.objects.filter(current_class=student_class, user__is_active=True).exists():
+            query_used = 'academic_status'
+
+        response = {
             'students': students_data,
-            'class_name': student_class.name
-        })
-        
+            'class_name': student_class.name,
+            'fallback': 'all_active' if fallback_used else None,
+        }
+
+        if debug_mode:
+            response['debug'] = {
+                'is_ajax': is_ajax,
+                'request_headers': {
+                    'Accept': request.headers.get('Accept'),
+                    'X-Requested-With': request.headers.get('X-Requested-With'),
+                    'User-Agent': request.headers.get('User-Agent')
+                },
+                'cookies_present': bool(request.META.get('HTTP_COOKIE')),
+                'query_used': query_used,
+                'total_studentprofiles': StudentProfile.objects.count(),
+                'active_users': StudentProfile.objects.filter(user__is_active=True).count(),
+                'studentclass_exists': True
+            }
+
+        return JsonResponse(response)
+
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 

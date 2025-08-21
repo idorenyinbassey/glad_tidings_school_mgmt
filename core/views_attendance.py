@@ -105,69 +105,10 @@ def attendance(request):
         }
         return render(request, 'core/attendance_student.html', context)
 
-    # Staff: filterable list + mark today present/absent
+
+    # Staff: redirect to manage student attendance
     if hasattr(user, 'staff_profile'):
-        staff = user.staff_profile
-
-        if request.method == 'POST':
-            action = request.POST.get('action')  # 'present' | 'absent'
-            date_str = request.POST.get('date')
-            try:
-                mark_date = (
-                    datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else timezone.now().date()
-                )
-            except Exception:
-                mark_date = timezone.now().date()
-
-            obj, _ = StaffAttendance.objects.get_or_create(
-                staff=staff,
-                date=mark_date,
-                defaults={'present': True, 'created_by': user},
-            )
-            if action == 'present':
-                obj.present = True
-            elif action == 'absent':
-                obj.present = False
-            if obj.created_by is None:
-                obj.created_by = user
-            obj.save()
-            messages.success(
-                request,
-                f"Attendance for {mark_date.isoformat()} marked as {'Present' if obj.present else 'Absent'}.",
-            )
-            return redirect('attendance')
-
-        start_date = request.GET.get('start_date') or ''
-        end_date = request.GET.get('end_date') or ''
-
-        records = staff.attendance_records.all().order_by('-date')  # pyright: ignore[reportAttributeAccessIssue]
-        if start_date:
-            try:
-                records = records.filter(date__gte=start_date)
-            except Exception:
-                messages.warning(request, 'Invalid start date filter ignored.')
-        if end_date:
-            try:
-                records = records.filter(date__lte=end_date)
-            except Exception:
-                messages.warning(request, 'Invalid end date filter ignored.')
-
-        total = records.count()
-        present = records.filter(present=True).count()
-        absent = records.filter(present=False).count()
-        percent = round((present / total) * 100, 1) if total else 0.0
-
-        context = {
-            'records': records,
-            'total_days': total,
-            'days_present': present,
-            'days_absent': absent,
-            'attendance_percent': percent,
-            'start_date': start_date,
-            'end_date': end_date,
-            'today': timezone.now().date(),
-        }
-        return render(request, 'core/attendance_staff.html', context)
+        return redirect('manage_student_attendance')
 
     # If reached here, user doesn't match student/staff and isn't plain admin
     messages.error(request, "You don't have an attendance view. Contact admin if this is unexpected.")
@@ -175,7 +116,7 @@ def attendance(request):
 
 
 @login_required
-@admin_required
+@role_required(['admin', 'staff'])
 def manage_student_attendance(request):
     """Admin tool to search/select students and mark attendance for a selected date."""
     query = request.GET.get('q', '').strip()

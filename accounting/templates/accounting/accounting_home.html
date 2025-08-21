@@ -267,6 +267,14 @@
 </style>
 {% endblock %}
 
+<!-- DEBUG: Raw JSON output for troubleshooting chart data -->
+<div style="background:#fff3cd;color:#856404;padding:10px;margin:20px 0;border:1px solid #ffeeba;border-radius:5px;">
+    <strong>DEBUG: monthly_trends_json</strong><br>
+    <pre style="white-space:pre-wrap;word-break:break-all;">{{ monthly_trends_json }}</pre>
+    <strong>DEBUG: payment_methods_json</strong><br>
+    <pre style="white-space:pre-wrap;word-break:break-all;">{{ payment_methods_json }}</pre>
+</div>
+
 {% block content %}
 <div class="finance-dashboard">
     <div class="container-fluid py-4">
@@ -676,30 +684,8 @@
 
 {% block scripts %}
 <!-- Django data as JSON for JavaScript consumption -->
-<script type="application/json" id="monthly-data">{{ monthly_data|safe }}</script>
-<script type="application/json" id="payment-methods-data">
-[
-    {% for method in payment_methods %}
-    {
-        "label": "{{ method.payment_method|capfirst }}",
-        "value": {{ method.total|floatformat:0 }}
-    }{% if not forloop.last %},{% endif %}
-    {% empty %}
-    {
-        "label": "Bank Transfer",
-        "value": 50000
-    },
-    {
-        "label": "Cash",
-        "value": 30000
-    },
-    {
-        "label": "Card",
-        "value": 20000
-    }
-    {% endfor %}
-]
-</script>
+<script type="application/json" id="monthly-data">{{ monthly_trends_json|safe }}</script>
+<script type="application/json" id="payment-methods-data">{{ payment_methods_json|safe }}</script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>

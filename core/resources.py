@@ -1,5 +1,6 @@
 from import_export import resources, fields
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group
+from users.models import CustomUser
 from students.models import StudentProfile
 from staff.models import StaffProfile
 from accounting.models import TuitionFee, Payment, Payroll, Expense
@@ -45,7 +46,7 @@ class UserResource(resources.ModelResource):
     )
 
     class Meta:
-        model = User
+        model = CustomUser
         fields = (
             'id', 'username', 'first_name', 'last_name', 'email',
             'user_type', 'admission_number', 'student_class',
@@ -101,65 +102,64 @@ class UserResource(resources.ModelResource):
             if first_name and last_name:
                 row['username'] = f"{first_name}.{last_name}"
 
-    def after_save_instance(self, instance, using_transactions, dry_run, **kwargs):
+    def after_save_instance(self, instance, new, row_number=None, **kwargs):
         """Create profile and assign groups after saving user"""
-        if not dry_run:
-            user_type = getattr(instance, 'user_type', None)
+        user_type = getattr(instance, 'user_type', None)
 
-            if user_type == 'student':
-                # Create or update student profile
-                student_profile, created = StudentProfile.objects.get_or_create(
-                    user=instance,
-                    defaults={
-                        'admission_number': getattr(instance, 'admission_number', ''),
-                        'current_class': getattr(instance, 'student_class', ''),
-                        'date_of_birth': None,
-                        'address': '',
-                        'phone_number': '',
-                        'guardian_name': '',
-                        'guardian_phone': '',
-                    }
-                )
-                if not created:
-                    # Update existing profile
-                    if hasattr(instance, 'admission_number'):
-                        student_profile.admission_number = instance.admission_number
-                    if hasattr(instance, 'student_class'):
-                        student_profile.current_class = instance.student_class
-                    student_profile.save()
+        if user_type == 'student':
+            # Create or update student profile
+            student_profile, created = StudentProfile.objects.get_or_create(
+                user=instance,
+                defaults={
+                    'admission_number': getattr(instance, 'admission_number', ''),
+                    'current_class': getattr(instance, 'student_class', ''),
+                    'date_of_birth': None,
+                    'address': '',
+                    'phone_number': '',
+                    'guardian_name': '',
+                    'guardian_phone': '',
+                }
+            )
+            if not created:
+                # Update existing profile
+                if hasattr(instance, 'admission_number'):
+                    student_profile.admission_number = instance.admission_number
+                if hasattr(instance, 'student_class'):
+                    student_profile.current_class = instance.student_class
+                student_profile.save()
 
-                # Add to Students group
-                students_group, _ = Group.objects.get_or_create(name='Students')
-                instance.groups.add(students_group)
+            # Add to Students group
+            students_group, _ = Group.objects.get_or_create(name='Students')
+            instance.groups.add(students_group)
 
-            elif user_type == 'staff':
-                # Create or update staff profile
-                staff_profile, created = StaffProfile.objects.get_or_create(
-                    user=instance,
-                    defaults={
-                        'staff_id': getattr(instance, 'staff_id', ''),
-                        'department': getattr(instance, 'department', ''),
-                        'position': getattr(instance, 'position', ''),
-                        'date_of_birth': None,
-                        'hire_date': None,
-                        'phone_number': '',
-                        'address': '',
-                        'salary': 0,
-                    }
-                )
-                if not created:
-                    # Update existing profile
-                    if hasattr(instance, 'staff_id'):
-                        staff_profile.staff_id = instance.staff_id
-                    if hasattr(instance, 'department'):
-                        staff_profile.department = instance.department
-                    if hasattr(instance, 'position'):
-                        staff_profile.position = instance.position
-                    staff_profile.save()
+        elif user_type == 'staff':
+            # Create or update staff profile
+            staff_profile, created = StaffProfile.objects.get_or_create(
+                user=instance,
+                defaults={
+                    'staff_id': getattr(instance, 'staff_id', ''),
+                    'department': getattr(instance, 'department', ''),
+                    'position': getattr(instance, 'position', ''),
+                    'date_of_birth': None,
+                    'hire_date': None,
+                    'phone_number': '',
+                    'address': '',
+                    'salary': 0,
+                }
+            )
+            if not created:
+                # Update existing profile
+                if hasattr(instance, 'staff_id'):
+                    staff_profile.staff_id = instance.staff_id
+                if hasattr(instance, 'department'):
+                    staff_profile.department = instance.department
+                if hasattr(instance, 'position'):
+                    staff_profile.position = instance.position
+                staff_profile.save()
 
-                # Add to Staff group
-                staff_group, _ = Group.objects.get_or_create(name='Staff')
-                instance.groups.add(staff_group)
+            # Add to Staff group
+            staff_group, _ = Group.objects.get_or_create(name='Staff')
+            instance.groups.add(staff_group)
 
 
 class TuitionFeeResource(resources.ModelResource):
