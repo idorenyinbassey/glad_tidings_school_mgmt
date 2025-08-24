@@ -153,6 +153,17 @@ class Payment(models.Model):
         related_name='payment_created'
     )
 
+    # Verification fields
+    verified = models.BooleanField(default=False, db_index=True)
+    verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='payments_verified'
+    )
+    verified_at = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         ordering = ['-payment_date', '-created_at']
         indexes = [

@@ -269,6 +269,13 @@
                                             <button class="btn btn-sm btn-outline-success" title="Print Receipt">
                                                 <i class="fas fa-print"></i>
                                             </button>
+                                            {% if not payment.verified %}
+                                            <button class="btn btn-sm btn-primary verify-payment-btn" data-pk="{{ payment.pk }}" title="Verify Payment">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            {% else %}
+                                            <span class="badge bg-success">Verified</span>
+                                            {% endif %}
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -319,4 +326,58 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// CSRF helper for AJAX
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.verify-payment-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const pk = this.getAttribute('data-pk');
+            if (!confirm('Mark this payment as verified?')) return;
+            const csrftoken = getCookie('csrftoken');
+
+            fetch(`{% url 'accounting:verify_payment' 0 %}`.replace('/0/', `/${pk}/`), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({})
+            }).then(r => r.json()).then(data => {
+                if (data.success) {
+                    // Replace button with Verified badge
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-success';
+                    badge.textContent = 'Verified';
+                    btn.replaceWith(badge);
+                } else {
+                    alert('Verification failed');
+                }
+            }).catch(err => {
+                console.error(err);
+                alert('Verification failed (network error)');
+            });
+        });
+    });
+});
+</script>
 {% endblock %}

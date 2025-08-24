@@ -190,7 +190,7 @@ class ReportGenerator:
         fee_payments = Payment.objects.filter(
             payment_date__gte=self.start_date,
             payment_date__lte=self.end_date
-        ).select_related('tuition_fee', 'tuition_fee__student')
+        ).select_related('tuition_fee', 'tuition_fee__student', 'tuition_fee__student__current_class')
         
         # Build detailed payment data
         payment_list = []
@@ -210,7 +210,7 @@ class ReportGenerator:
                 
                 payment_list.append({
                     'student_name': f"{student.user.first_name} {student.user.last_name}",
-                    'student_class': getattr(student, 'current_class', 'N/A'),
+                    'student_class': (student.current_class.name if getattr(student, 'current_class', None) else 'N/A'),
                     'fee_type': f"{tuition_fee.session} {tuition_fee.term}",
                     'amount_due': float(tuition_fee.amount_due),  # Convert to float
                     'amount_paid': float(payment.amount),  # Convert to float

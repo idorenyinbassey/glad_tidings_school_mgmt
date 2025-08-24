@@ -623,7 +623,7 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>{{ fee.academic_session }}/{{ fee.term }}</td>
+                                        <td>{{ fee.session }}/{{ fee.term }}</td>
                                         <td class="fw-bold">₦{{ fee.amount_due|floatformat:0 }}</td>
                                         <td class="text-success">₦{{ fee.amount_paid|floatformat:0 }}</td>
                                         <td class="text-danger">₦{{ fee.amount_outstanding|floatformat:0 }}</td>
@@ -682,7 +682,7 @@
 
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
 <!-- Django data as JSON for JavaScript consumption -->
 <script type="application/json" id="monthly-data">{{ monthly_trends_json|safe }}</script>
 <script type="application/json" id="payment-methods-data">{{ payment_methods_json|safe }}</script>
@@ -831,8 +831,9 @@ function updateRevenueChart(monthlyData) {
 
 function updatePaymentMethodChart(paymentMethods) {
     if (paymentMethodChart) {
-        paymentMethodChart.data.labels = paymentMethods.map(m => m.payment_method.charAt(0).toUpperCase() + m.payment_method.slice(1));
-        paymentMethodChart.data.datasets[0].data = paymentMethods.map(m => m.total);
+    // paymentMethods expected format: [{label: 'Cash', value: 1234}, ...]
+    paymentMethodChart.data.labels = paymentMethods.map(m => m.label);
+    paymentMethodChart.data.datasets[0].data = paymentMethods.map(m => m.value);
         paymentMethodChart.update('active');
     }
 }

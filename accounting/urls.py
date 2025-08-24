@@ -19,6 +19,7 @@ urlpatterns = [
     path('payments/', views.payment_list, name='payment_list'),
     path('payments/create/', views.payment_create, name='payment_create'),
     path('payments/create/<int:fee_pk>/', views.payment_create, name='payment_create_for_fee'),
+    path('payments/<int:pk>/verify/', views.verify_payment, name='verify_payment'),
 
     # Expense Management
     path('expenses/', views.expense_list, name='expense_list'),

@@ -76,15 +76,16 @@ def accounting_home(request):
                 payment_date__month=month_date.month,
                 payment_date__year=month_date.year
             ).aggregate(total=Sum('amount'))['total'] or 0
-            
+
             month_expenses = Expense.objects.filter(
                 date__month=month_date.month,
                 date__year=month_date.year
             ).aggregate(total=Sum('amount'))['total'] or 0
-            
+
+            # Use keys expected by the frontend JS: 'revenue' and 'expenses'
             monthly_trends.append({
                 'month': month_date.strftime('%B %Y'),
-                'payments': float(month_payments),
+                'revenue': float(month_payments),
                 'expenses': float(month_expenses),
                 'net': float(month_payments - month_expenses)
             })
@@ -108,6 +109,17 @@ def accounting_home(request):
             count=Count('id'),
             total=Sum('amount')
         ).order_by('-total')
+
+        # Build a frontend-friendly list of {label, value} for charts
+        payment_methods_serializable = []
+        for pm in payment_methods:
+            label = pm.get('method') or 'Unknown'
+            total = pm.get('total') or 0
+            try:
+                value = float(total)
+            except Exception:
+                value = total
+            payment_methods_serializable.append({'label': label, 'value': value})
         
         # Additional calculations for template compatibility
         total_revenue = monthly_payments
@@ -131,14 +143,20 @@ def accounting_home(request):
         week_payments = Payment.objects.filter(payment_date__gte=week_start).aggregate(total=Sum('amount'))['total'] or 0
         month_payments = monthly_payments
         
-        # Recent payments count (instead of unverified)
+        # Recent payments count
         recent_payments_count = Payment.objects.filter(
             payment_date__gte=timezone.now().date() - timezone.timedelta(days=7)
         ).count()
-        
-        # For template compatibility - use recent payments count as unverified
-        unverified_payments = recent_payments_count
-        
+
+        # Unverified payments count (use actual DB flag)
+        try:
+            unverified_payments = Payment.objects.filter(verified=False).count()
+        except Exception:
+            # Fallback for older DBs or before migration
+            unverified_payments = recent_payments_count
+
+        # Show most recent fees, no filters
+        recent_fees = TuitionFee.objects.select_related('student', 'student__user').order_by('-created_at')[:5]
         context.update({
             'monthly_fees': monthly_fees,
             'monthly_payments': monthly_payments,
@@ -146,6 +164,7 @@ def accounting_home(request):
             'outstanding_fees': outstanding_fees,
             'recent_payments': recent_payments,
             'recent_expenses': recent_expenses,
+            'recent_fees': recent_fees,
             'fee_stats': fee_stats,
             'monthly_trends': monthly_trends,
             'fee_categories': fee_categories,
@@ -153,7 +172,7 @@ def accounting_home(request):
             'payment_methods': payment_methods,
             'net_income': net_income,
             'current_month': timezone.now().strftime('%B %Y'),
-            
+
             # Template-specific variables
             'total_revenue': total_revenue,
             'total_expenses': total_expenses,
@@ -184,7 +203,7 @@ def accounting_home(request):
         
         context.update({
             'monthly_trends_json': json.dumps(monthly_trends),  # Already converted to float in loop
-            'payment_methods_json': json.dumps(make_json_serializable(payment_methods)),
+            'payment_methods_json': json.dumps(payment_methods_serializable),
             'fee_categories_json': json.dumps(make_json_serializable(fee_categories)),
             'expense_categories_json': json.dumps(make_json_serializable(expense_categories))
         })
@@ -332,11 +351,17 @@ def fees(request):
         
         context['fee_structure'] = fee_structure
         context['current_session'] = current_session
-        
+
+        # Add recent payments for the payments table
+        from .models import Payment
+        payments = Payment.objects.select_related('tuition_fee', 'tuition_fee__student', 'tuition_fee__student__user').order_by('-payment_date')[:10]
+        context['payments'] = payments
+    
     except Exception as e:
         messages.error(request, f'Error loading fee structure: {str(e)}')
         context['fee_structure'] = []
         context['current_session'] = f"{timezone.now().year}/{timezone.now().year + 1}"
+        context['payments'] = []
     
     return render(request, 'accounting/fees.html', context)
 
@@ -521,45 +546,24 @@ def fee_list(request):
         'collection_percentage': collection_percentage
     }
     
+    # Prepare context and render the fee list template
     context = {
+        'fees': fees,
         'page_obj': page_obj,
-        'total_fees': total_fees,
-        'pending_fees': pending_fees, 
-        'paid_fees': paid_fees,
-        'unpaid_fees': unpaid_fees,
+        'paginator': paginator,
         'fee_stats': fee_stats,
-        'search_query': search_query,
-        'status_filter': status_filter,
-        'session_filter': session_filter,
-        'date_from': date_from,
-        'date_to': date_to,
-        'sessions': available_sessions,
-        'terms': available_terms,
-        'status_choices': TuitionFee.STATUS_CHOICES
+        'available_sessions': available_sessions,
+        'available_terms': available_terms,
+        'filters': {
+            'status': status_filter,
+            'session': session_filter,
+            'q': search_query,
+            'date_from': date_from,
+            'date_to': date_to,
+        }
     }
-    
+
     return render(request, 'accounting/fee_list.html', context)
-
-
-@login_required
-@staff_required
-def fee_create(request):
-    """Create a new tuition fee"""
-    if request.method == 'POST':
-        form = TuitionFeeForm(request.POST)
-        if form.is_valid():
-            fee = form.save(commit=False)
-            fee.created_by = request.user
-            fee.save()
-            messages.success(request, f'Fee created successfully for {fee.student}')
-            return redirect('accounting:fee_detail', pk=fee.pk)
-    else:
-        form = TuitionFeeForm()
-    
-    return render(request, 'accounting/fee_form.html', {
-        'form': form,
-        'title': 'Create New Fee'
-    })
 
 
 @login_required
@@ -603,6 +607,27 @@ def fee_edit(request, pk):
     })
 
 
+@login_required
+@staff_required
+def fee_create(request):
+    """Create a new tuition fee"""
+    if request.method == 'POST':
+        form = TuitionFeeForm(request.POST)
+        if form.is_valid():
+            fee = form.save(commit=False)
+            fee.created_by = request.user
+            fee.save()
+            messages.success(request, f'Fee created successfully for {fee.student}')
+            return redirect('accounting:fee_detail', pk=fee.pk)
+    else:
+        form = TuitionFeeForm()
+    
+    return render(request, 'accounting/fee_form.html', {
+        'form': form,
+        'title': 'Create New Fee'
+    })
+
+
 # Payment Management Views
 @login_required
 @staff_required
@@ -613,8 +638,10 @@ def payment_create(request, fee_pk=None):
     
     if fee_pk:
         fee = get_object_or_404(TuitionFee, pk=fee_pk)
-    initial_data['fee'] = fee
-    initial_data['amount'] = fee.amount_outstanding
+        initial_data['fee'] = fee
+        initial_data['amount'] = fee.amount_outstanding
+    else:
+        initial_data['fee'] = None
     
     if request.method == 'POST':
         form = PaymentForm(request.POST)
@@ -641,7 +668,7 @@ def payment_create(request, fee_pk=None):
 @staff_required
 def payment_list(request):
     """List all payments with search and filtering"""
-    payments = Payment.objects.select_related('student', 'fee', 'recorded_by').order_by('-date')
+    payments = Payment.objects.select_related('tuition_fee', 'created_by').order_by('-payment_date')
     
     # Search functionality
     search_query = request.GET.get('q')
@@ -706,6 +733,29 @@ def payment_list(request):
     }
     
     return render(request, 'accounting/payment_list.html', context)
+
+
+@login_required
+@staff_required
+def verify_payment(request, pk):
+    """AJAX endpoint to mark a payment as verified"""
+    from django.shortcuts import get_object_or_404
+    from django.http import JsonResponse, HttpResponseBadRequest
+    from django.utils import timezone
+
+    if request.method != 'POST':
+        return HttpResponseBadRequest('Invalid method')
+
+    payment = get_object_or_404(Payment, pk=pk)
+    if payment.verified:
+        return JsonResponse({'success': True, 'already_verified': True, 'payment_id': payment.pk})
+
+    payment.verified = True
+    payment.verified_by = request.user
+    payment.verified_at = timezone.now()
+    payment.save(update_fields=['verified', 'verified_by', 'verified_at'])
+
+    return JsonResponse({'success': True, 'payment_id': payment.pk})
 
 
 # Expense Management Views  

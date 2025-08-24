@@ -24,8 +24,8 @@
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Fee Structure ({{ current_session }})</h5>
                     <div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-light">Export</button>
-                        <button type="button" class="btn btn-sm btn-light">Print</button>
+                        <button type="button" class="btn btn-sm btn-light" onclick="alert('Export to Excel/CSV coming soon!')" title="Export to Excel/CSV (coming soon)">Export</button>
+                        <button type="button" class="btn btn-sm btn-light" onclick="window.print()" title="Print this page">Print</button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -73,19 +73,19 @@
                 </div>
                 <div class="card-body">
                     <div class="list-group">
-                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <a href="javascript:void(0);" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center disabled" tabindex="-1" aria-disabled="true" title="Feature coming soon">
                             Generate Invoice
                             <i class="fas fa-file-invoice"></i>
                         </a>
-                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <a href="{% url 'accounting:payment_create' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" title="Record a new payment">
                             Record Payment
                             <i class="fas fa-money-bill-wave"></i>
                         </a>
-                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <a href="{% url 'accounting:payment_list' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" title="View payment history">
                             Payment History
                             <i class="fas fa-history"></i>
                         </a>
-                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <a href="javascript:void(0);" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center disabled" tabindex="-1" aria-disabled="true" title="Feature coming soon">
                             Send Reminders
                             <i class="fas fa-bell"></i>
                         </a>
@@ -182,7 +182,7 @@
                                                     {{ payment.tuition_fee.get_status_display }}
                                                 </span>
                                             </td>
-                                            <td><a href="#" class="btn btn-sm btn-outline-primary">View</a></td>
+                                            <td><a href="{% url 'accounting:fee_detail' payment.tuition_fee.pk %}" class="btn btn-sm btn-outline-primary" title="View Fee Details">View</a></td>
                                         </tr>
                                     {% endfor %}
                                 {% else %}
@@ -195,15 +195,41 @@
                     </div>
                 </div>
                 <div class="card-footer">
+                    {% if page_obj.has_other_pages %}
                     <nav aria-label="Fee payment navigation">
                         <ul class="pagination justify-content-end mb-0">
-                            <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
-                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item"><a class="page-link" href="#">3</a></li>
-                            <li class="page-item"><a class="page-link" href="#">Next</a></li>
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">&laquo;</span>
+                                </li>
+                            {% endif %}
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                {% else %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">&raquo;</span>
+                                </li>
+                            {% endif %}
                         </ul>
                     </nav>
+                    {% endif %}
                 </div>
             </div>
         </div>
